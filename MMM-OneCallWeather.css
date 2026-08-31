@@ -299,35 +299,35 @@
   }
 
   /* ==========================================================================
-     Apple Weather-style Layout
+     Apple layout (forecastLayout: "apple")
      ========================================================================== */
 
-  & .weather-container {
+  & .apple-layout {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
   }
 
-  & .current-weather {
+  & .apple-current {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 340px;
     text-align: center;
-    border-right: 1px solid rgba(255, 255, 255, 0.25);
-    padding-right: 10px;
-    margin-right: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    padding-right: 14px;
+    margin-right: 4px;
   }
 
-  & .current-combo {
+  & .apple-combo {
     display: flex;
     width: 100%;
     align-items: center;
-    height: 130px;
+    height: 120px;
   }
 
-  & .current-weather-icon {
+  & .apple-current-icon {
     flex: 1 0 auto;
     height: 100%;
     background-size: contain;
@@ -335,113 +335,112 @@
     background-position: center;
   }
 
-  & .current-temp-feelslike {
+  & .apple-temp-block {
     flex: 1 0 auto;
+    text-align: center;
   }
 
-  & .current-temperature {
-    font-size: 58px;
+  & .apple-temperature {
+    font-size: 56px;
     font-weight: bold;
     line-height: 1;
   }
 
-  & .current-feelslike {
-    font-size: 14px;
-    opacity: 0.75;
+  & .apple-feelslike {
+    font-size: 13px;
+    opacity: 0.7;
     margin-top: 4px;
   }
 
-  & .hourly-forecast {
+  & .apple-hourly {
     display: flex;
     flex-direction: row;
-    gap: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding-top: 10px;
     margin-top: 10px;
     width: 100%;
     justify-content: center;
   }
 
-  & .hourly-item {
+  & .apple-hour {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
-    min-width: 36px;
+    gap: 4px;
+    min-width: 32px;
   }
 
-  & .hourly-hour {
-    font-size: 13px;
-    opacity: 0.75;
+  & .apple-hour-num {
+    font-size: 12px;
+    opacity: 0.7;
   }
 
-  & .hourly-icon {
-    width: 32px;
-    height: 32px;
+  & .apple-hour-icon {
+    width: 30px;
+    height: 30px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
   }
 
-  & .hourly-temperature {
-    font-size: 13px;
+  & .apple-hour-temp {
+    font-size: 12px;
   }
 
-  & .weather-forecast-container {
+  & .apple-forecast {
     flex: 1 0 auto;
     min-width: 220px;
     max-width: 280px;
   }
 
-  & .forecast-row {
+  & .apple-day-row {
     display: grid;
     grid-template-columns: 3fr 2fr 2fr 5fr 2fr;
     align-items: center;
     gap: 4px;
     padding: 5px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 
     &:last-child {
       border-bottom: none;
     }
   }
 
-  & .forecast-row .day {
-    font-size: 15px;
+  & .apple-day-name {
+    font-size: 14px;
     font-weight: 600;
     text-align: left;
     text-transform: capitalize;
   }
 
-  & .forecast-row .forecast-icon {
-    width: 32px;
-    height: 32px;
+  & .apple-day-icon {
+    width: 28px;
+    height: 28px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     justify-self: center;
   }
 
-  & .forecast-row .low-temp {
+  & .apple-day-low {
     font-size: 13px;
     text-align: right;
-    opacity: 0.6;
+    opacity: 0.55;
   }
 
-  & .temp-bar {
-    height: 6px;
+  & .apple-temp-bar {
+    height: 5px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
-    position: relative;
-    overflow: visible;
   }
 
-  & .temp-bar .fill {
+  & .apple-temp-fill {
     height: 100%;
     border-radius: 3px;
   }
 
-  & .forecast-row .high-temp {
+  & .apple-day-high {
     font-size: 13px;
     text-align: left;
     padding-left: 4px;
