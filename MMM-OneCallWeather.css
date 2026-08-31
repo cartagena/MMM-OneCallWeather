@@ -368,16 +368,16 @@
 }
 
 /* ==========================================================================
-   Custom OCW layout (local display customization)
+   Custom layout (local display customization)
    ========================================================================== */
 
-.OCW.weather-container {
+.MMM-OneCallWeather .weather-container {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.OCW .weather-forecast-container {
+.MMM-OneCallWeather .weather-forecast-container {
   padding-left: 20px;
   font-family: Arial, sans-serif;
   color: #333;
@@ -385,7 +385,7 @@
   align-self: flex-end;
 }
 
-.OCW .header {
+.MMM-OneCallWeather .header {
   text-transform: uppercase;
   font-size: 12px;
   font-weight: bold;
@@ -393,21 +393,21 @@
   color: rgba(0, 0, 0, 0.8);
 }
 
-.OCW .forecast-row {
+.MMM-OneCallWeather .forecast-row {
   display: grid;
   grid-template-columns: 15% 20% 10% 45% 10%;
   align-items: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.OCW .day {
+.MMM-OneCallWeather .day {
   font-size: 16px;
   font-weight: bold;
   color: #555;
   text-align: left;
 }
 
-.OCW .icon {
+.MMM-OneCallWeather .icon {
   width: 40px;
   height: 40px;
   background-size: contain;
@@ -415,20 +415,20 @@
   margin-right: 10px;
 }
 
-.OCW .hourly-icon {
+.MMM-OneCallWeather .hourly-icon {
   width: 40px;
   height: 40px;
   background-size: contain;
   background-repeat: no-repeat;
 }
 
-.OCW .low-temp, .OCW .high-temp {
+.MMM-OneCallWeather .low-temp, .MMM-OneCallWeather .high-temp {
   font-size: 14px;
   font-weight: bold;
   text-align: center;
 }
 
-.OCW .temp-bar {
+.MMM-OneCallWeather .temp-bar {
   width: 100px;
   height: 6px;
   background: rgba(0, 0, 0, 0.1);
@@ -437,14 +437,14 @@
   overflow: hidden;
 }
 
-.OCW .fill {
+.MMM-OneCallWeather .fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.3s ease, background-color 0.3s ease;
   background: linear-gradient(to right, #00a8ff, #ff0000);
 }
 
-.OCW .current-weather {
+.MMM-OneCallWeather .current-weather {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -454,19 +454,19 @@
   margin-right: 10px;
 }
 
-.OCW .location-text {
+.MMM-OneCallWeather .location-text {
   width: 200px;
   color: black;
 }
 
-.OCW .current-combo {
+.MMM-OneCallWeather .current-combo {
   display: flex;
   width: 400px;
   align-items: center;
   height: 130px;
 }
 
-.OCW .current-weather-icon {
+.MMM-OneCallWeather .current-weather-icon {
   width: 80%;
   height: 100%;
   background-size: contain;
@@ -474,24 +474,24 @@
   background-position: center;
 }
 
-.OCW .current-temp-feelslike {
+.MMM-OneCallWeather .current-temp-feelslike {
   width: 100%;
 }
 
-.OCW .current-temperature {
+.MMM-OneCallWeather .current-temperature {
   font-size: 65px;
   font-weight: bold;
   color: black;
   line-height: normal;
 }
 
-.OCW .current-feelslike {
+.MMM-OneCallWeather .current-feelslike {
   font-size: 20px;
   font-weight: normal;
   color: black;
 }
 
-.OCW .current-indoor {
+.MMM-OneCallWeather .current-indoor {
   font-size: 20px;
   color: black;
   width: 200px;
@@ -501,7 +501,7 @@
   height: 20px;
 }
 
-.OCW .hourly-forecast {
+.MMM-OneCallWeather .hourly-forecast {
   display: flex;
   flex-direction: row;
   font-size: 20px;
