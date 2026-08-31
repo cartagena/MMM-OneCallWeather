@@ -96,8 +96,12 @@ Module.register("MMM-OneCallWeather", {
     dayjs.extend(window.dayjs_plugin_utc);
     this.forecast = [];
     this.loaded = false;
-    this.scheduleUpdate(this.config.initialLoadDelay);
     this.updateTimer = null;
+    this.scheduleUpdate(this.config.initialLoadDelay);
+    const self = this;
+    this.socket().socket.on("connect", () => {
+      if (self.loaded) { self.updateWeather(); }
+    });
   },
 
   scheduleUpdate (delay) {
@@ -114,6 +118,7 @@ Module.register("MMM-OneCallWeather", {
   },
 
   updateWeather () {
+    this.scheduleUpdate();
     this.sendSocketNotification("OPENWEATHER_ONECALL_GET", {
       apikey: this.config.apikey,
       apiVersion: this.config.apiVersion,
@@ -128,15 +133,13 @@ Module.register("MMM-OneCallWeather", {
   // Log.debug("node received");
 
   socketNotificationReceived (notification, payload) {
-    // Log.debug("got some data back");
-
     if (notification === "OPENWEATHER_ONECALL_DATA") {
-      // process weather data
       data = payload;
       this.forecast = this.processOnecall(data);
       this.loaded = true;
-      this.updateDom(); // this.config.updateFadeSpeed
-      this.scheduleUpdate();
+      this.updateDom();
+    } else if (notification === "OPENWEATHER_ONECALL_ERROR") {
+      Log.error(`[MMM-OneCallWeather] fetch error: ${payload.error}`);
     }
   },
 

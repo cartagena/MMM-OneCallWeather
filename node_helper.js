@@ -45,7 +45,10 @@ module.exports = NodeHelper.create({
 
         // make request to OpenWeather One Call API
 
-        fetch(myUrl)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        fetch(myUrl, { signal: controller.signal })
           .then((response) => {
             if (response.status === 200) {
               return response.json();
@@ -53,14 +56,16 @@ module.exports = NodeHelper.create({
             throw new Error(response.statusText);
           })
           .then((data) => {
-            // handle success
             Log.debug(`[MMM-OneCallWeather] got request loop ${myUrl}`);
             self.sendSocketNotification("OPENWEATHER_ONECALL_DATA", data);
             Log.debug("[MMM-OneCallWeather] sent the data back");
           })
           .catch((error) => {
-            // handle error
             Log.error(`[MMM-OneCallWeather] ${dayjs().format("D-MMM-YY HH:mm")} ** ERROR ** ${error}`);
+            self.sendSocketNotification("OPENWEATHER_ONECALL_ERROR", { error: error.message });
+          })
+          .finally(() => {
+            clearTimeout(timeoutId);
           });
       }
     }
