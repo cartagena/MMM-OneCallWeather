@@ -852,8 +852,8 @@ Module.register('MMM-OneCallWeather', {
     const forecastPanel = document.createElement('div')
     forecastPanel.className = 'apple-forecast'
 
-    let globalMin = 50
-    let globalMax = 0
+    let globalMin = Infinity
+    let globalMax = -Infinity
     for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
       const d = this.forecast.days[j]
       globalMin = Math.min(globalMin, parseInt(d.minTemperature))
@@ -917,6 +917,8 @@ Module.register('MMM-OneCallWeather', {
   },
 
   getTemperatureColor(temperature) {
+    // color map is in Celsius; convert Fahrenheit input before lookup
+    const tempC = this.config.units === 'imperial' ? (temperature - 32) * (5 / 9) : temperature
     const colorMap = [
       { temp: 0, color: '#5ecde8' },
       { temp: 5, color: '#60cfe0' },
@@ -933,11 +935,11 @@ Module.register('MMM-OneCallWeather', {
     for (let i = 0; i < colorMap.length - 1; i++) {
       const lower = colorMap[i]
       const upper = colorMap[i + 1]
-      if (temperature >= lower.temp && temperature <= upper.temp) {
-        return interpolate(lower.color, upper.color, (temperature - lower.temp) / (upper.temp - lower.temp))
+      if (tempC >= lower.temp && tempC <= upper.temp) {
+        return interpolate(lower.color, upper.color, (tempC - lower.temp) / (upper.temp - lower.temp))
       }
     }
-    return temperature < colorMap[0].temp ? colorMap[0].color : colorMap.at(-1).color
+    return tempC < colorMap[0].temp ? colorMap[0].color : colorMap.at(-1).color
 
     function interpolate(c1, c2, factor) {
       const n1 = parseInt(c1.slice(1), 16)
