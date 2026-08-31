@@ -822,7 +822,9 @@ Module.register('MMM-OneCallWeather', {
     const maxHourly = Math.min(this.config.maxHourliesToShow, 8)
     for (let j = 1; j <= maxHourly; j += 1) {
       const hour = this.forecast.hours[j]
-      if (!hour) { break }
+      if (!hour) {
+        break
+      }
 
       const hourDiv = document.createElement('div')
       hourDiv.className = 'apple-hour'
