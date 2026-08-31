@@ -38,7 +38,7 @@ Module.register('MMM-OneCallWeather', {
     iconsetFormat: 'png',
 
     onlyTemp: false,
-    maxHourliesToShow: 30,
+    maxHourliesToShow: 6,
     maxDailiesToShow: 6,
     colored: true,
     roundTemp: true,
@@ -46,7 +46,7 @@ Module.register('MMM-OneCallWeather', {
     showForecast: true,
     showAlerts: true,
     showAlertsHours: 12,
-    forecastLayout: 'columns', // "columns" (days as columns) or "rows" (days as rows)
+    forecastLayout: 'columns', // "columns" (days as columns) | "rows" (days as rows) | "apple" (current + hourly strip + gradient bars)
     arrangement: 'vertical', // "vertical" (forecast below current) or "horizontal" (forecast next to current)
 
     labelOrdinals: [
@@ -317,6 +317,11 @@ Module.register('MMM-OneCallWeather', {
     }
 
     const [currentWeather] = this.forecast.current
+
+    if (this.config.forecastLayout === 'apple') {
+      return this.createAppleLayout(currentWeather, degreeLabel)
+    }
+
     const colspan = this.config.forecastLayout === 'rows' ? '6' : this.config.maxDailiesToShow
     let table = document.createElement('table')
     table.className = this.config.tableClass
@@ -774,6 +779,184 @@ Module.register('MMM-OneCallWeather', {
     }
 
     return table
+  },
+
+  // Apple Weather-style layout: large current, hourly strip, daily gradient bars
+  createAppleLayout(currentWeather, degreeLabel) {
+    const root = document.createElement('div')
+    root.className = 'apple-layout'
+
+    // ── Current weather panel ─────────────────────────────────────────────────
+    const currentPanel = document.createElement('div')
+    currentPanel.className = 'apple-current'
+
+    const iconDiv = document.createElement('div')
+    iconDiv.className = 'apple-current-icon'
+    iconDiv.style.backgroundImage = `url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${currentWeather.weatherIcon}.${this.config.iconsetFormat}')`
+
+    const tempDiv = document.createElement('div')
+    tempDiv.className = 'apple-temperature'
+    tempDiv.textContent = `${currentWeather.temperature}${degreeLabel}`
+
+    const feelsDiv = document.createElement('div')
+    feelsDiv.className = 'apple-feels-like'
+    feelsDiv.textContent = `Feels like ${currentWeather.feelsLikeTemp}${degreeLabel}`
+
+    const tempBlock = document.createElement('div')
+    tempBlock.className = 'apple-temp-block'
+    tempBlock.appendChild(tempDiv)
+    if (this.config.showFeelsLike) {
+      tempBlock.appendChild(feelsDiv)
+    }
+
+    const combo = document.createElement('div')
+    combo.className = 'apple-combo'
+    combo.appendChild(iconDiv)
+    combo.appendChild(tempBlock)
+    currentPanel.appendChild(combo)
+
+    // Hourly strip
+    const hourlyStrip = document.createElement('div')
+    hourlyStrip.className = 'apple-hourly'
+
+    const maxHourly = Math.min(this.config.maxHourliesToShow, 8)
+    for (let j = 1; j <= maxHourly; j += 1) {
+      const hour = this.forecast.hours[j]
+      if (!hour) {
+        break
+      }
+
+      const hourDiv = document.createElement('div')
+      hourDiv.className = 'apple-hour'
+
+      const hn = document.createElement('div')
+      hn.className = 'apple-hour-num'
+      hn.textContent = hour.date.getUTCHours()
+      hourDiv.appendChild(hn)
+
+      const hi = document.createElement('div')
+      hi.className = 'apple-hour-icon'
+      hi.style.backgroundImage = `url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${hour.weatherIcon}.${this.config.iconsetFormat}')`
+      hourDiv.appendChild(hi)
+
+      const ht = document.createElement('div')
+      ht.className = 'apple-hour-temp'
+      ht.textContent = `${hour.temperature.toFixed(0)}${degreeLabel}`
+      hourDiv.appendChild(ht)
+
+      hourlyStrip.appendChild(hourDiv)
+    }
+    currentPanel.appendChild(hourlyStrip)
+
+    root.appendChild(currentPanel)
+
+    // ── Daily forecast panel ──────────────────────────────────────────────────
+    const forecastPanel = document.createElement('div')
+    forecastPanel.className = 'apple-forecast'
+
+    let globalMin = Infinity
+    let globalMax = -Infinity
+    for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
+      const d = this.forecast.days[j]
+      globalMin = Math.min(globalMin, parseInt(d.minTemperature, 10))
+      globalMax = Math.max(globalMax, parseInt(d.maxTemperature, 10))
+    }
+
+    for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
+      const day = this.forecast.days[j]
+      const minTemp = parseInt(day.minTemperature, 10)
+      const maxTemp = parseInt(day.maxTemperature, 10)
+      const totalRange = globalMax - globalMin
+
+      const row = document.createElement('div')
+      row.className = 'apple-day-row'
+
+      const dayLabel = document.createElement('div')
+      dayLabel.className = 'apple-day-name'
+      dayLabel.textContent = day.dayOfWeek
+      row.appendChild(dayLabel)
+
+      const dayIcon = document.createElement('div')
+      dayIcon.className = 'apple-day-icon'
+      dayIcon.style.backgroundImage = `url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${day.weatherIcon}.${this.config.iconsetFormat}')`
+      row.appendChild(dayIcon)
+
+      const lowDiv = document.createElement('div')
+      lowDiv.className = 'apple-day-low'
+      lowDiv.textContent = `${day.minTemperature}${degreeLabel}`
+      row.appendChild(lowDiv)
+
+      const barDiv = document.createElement('div')
+      barDiv.className = 'apple-temp-bar'
+      const fillDiv = document.createElement('div')
+      fillDiv.className = 'apple-temp-fill'
+
+      const tempRange = maxTemp - minTemp
+      const stops = []
+      for (let t = minTemp; t <= maxTemp; t += 1) {
+        const pct = tempRange === 0 ? 0 : ((t - minTemp) / tempRange) * 100
+        stops.push(`${this.getTemperatureColor(t)} ${pct}%`)
+      }
+      fillDiv.style.background = `linear-gradient(to right, ${stops.join(', ')})`
+      if (totalRange > 0) {
+        fillDiv.style.marginLeft = `${((minTemp - globalMin) / totalRange) * 100}%`
+        fillDiv.style.marginRight = `${((globalMax - maxTemp) / totalRange) * 100}%`
+      }
+
+      barDiv.appendChild(fillDiv)
+      row.appendChild(barDiv)
+
+      const highDiv = document.createElement('div')
+      highDiv.className = 'apple-day-high'
+      highDiv.textContent = `${day.maxTemperature}${degreeLabel}`
+      row.appendChild(highDiv)
+
+      forecastPanel.appendChild(row)
+    }
+
+    root.appendChild(forecastPanel)
+    return root
+  },
+
+  getTemperatureColor(temperature) {
+    // color map is in Celsius; convert Fahrenheit input before lookup
+    const tempC = this.config.units === 'imperial' ? (temperature - 32) * (5 / 9) : temperature
+    const colorMap = [
+      { temp: 0, color: '#5ecde8' },
+      { temp: 5, color: '#60cfe0' },
+      { temp: 10, color: '#64d3d3' },
+      { temp: 15, color: '#8bd4ba' },
+      { temp: 20, color: '#d9d170' },
+      { temp: 25, color: '#ffbd01' },
+      { temp: 30, color: '#ff811a' },
+      { temp: 35, color: '#ff592b' },
+      { temp: 40, color: '#e83328' },
+      { temp: 45, color: '#8e2825' },
+    ]
+
+    const interpolate = (c1, c2, factor) => {
+      const n1 = parseInt(c1.slice(1), 16)
+      const n2 = parseInt(c2.slice(1), 16)
+      const r1 = Math.floor(n1 / 65536) % 256
+      const r2 = Math.floor(n2 / 65536) % 256
+      const g1 = Math.floor(n1 / 256) % 256
+      const g2 = Math.floor(n2 / 256) % 256
+      const b1 = n1 % 256
+      const b2 = n2 % 256
+      const r = Math.round(r1 + factor * (r2 - r1))
+      const g = Math.round(g1 + factor * (g2 - g1))
+      const b = Math.round(b1 + factor * (b2 - b1))
+      return `#${(16777216 + r * 65536 + g * 256 + b).toString(16).slice(1)}`
+    }
+
+    for (let i = 0; i < colorMap.length - 1; i += 1) {
+      const lower = colorMap[i]
+      const upper = colorMap[i + 1]
+      if (tempC >= lower.temp && tempC <= upper.temp) {
+        return interpolate(lower.color, upper.color, (tempC - lower.temp) / (upper.temp - lower.temp))
+      }
+    }
+    return tempC < colorMap[0].temp ? colorMap[0].color : colorMap.at(-1).color
   },
 
   getOrdinal(bearing) {
