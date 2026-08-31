@@ -297,6 +297,155 @@
       font-size: 0.75em;
     }
   }
+
+  /* ==========================================================================
+     Apple Weather-style Layout
+     ========================================================================== */
+
+  & .weather-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  & .current-weather {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 340px;
+    text-align: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    padding-right: 10px;
+    margin-right: 10px;
+  }
+
+  & .current-combo {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 130px;
+  }
+
+  & .current-weather-icon {
+    flex: 1 0 auto;
+    height: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  & .current-temp-feelslike {
+    flex: 1 0 auto;
+  }
+
+  & .current-temperature {
+    font-size: 58px;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  & .current-feelslike {
+    font-size: 14px;
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+
+  & .hourly-forecast {
+    display: flex;
+    flex-direction: row;
+    gap: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 10px;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  & .hourly-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 36px;
+  }
+
+  & .hourly-hour {
+    font-size: 13px;
+    opacity: 0.75;
+  }
+
+  & .hourly-icon {
+    width: 32px;
+    height: 32px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  & .hourly-temperature {
+    font-size: 13px;
+  }
+
+  & .weather-forecast-container {
+    flex: 1 0 auto;
+    min-width: 220px;
+    max-width: 280px;
+  }
+
+  & .forecast-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr 2fr 5fr 2fr;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  & .forecast-row .day {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    text-transform: capitalize;
+  }
+
+  & .forecast-row .forecast-icon {
+    width: 32px;
+    height: 32px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    justify-self: center;
+  }
+
+  & .forecast-row .low-temp {
+    font-size: 13px;
+    text-align: right;
+    opacity: 0.6;
+  }
+
+  & .temp-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+  }
+
+  & .temp-bar .fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  & .forecast-row .high-temp {
+    font-size: 13px;
+    text-align: left;
+    padding-left: 4px;
+  }
 }
 
 /* ==========================================================================
