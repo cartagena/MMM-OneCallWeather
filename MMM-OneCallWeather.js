@@ -799,7 +799,7 @@ Module.register('MMM-OneCallWeather', {
     tempDiv.textContent = `${currentWeather.temperature}${degreeLabel}`
 
     const feelsDiv = document.createElement('div')
-    feelsDiv.className = 'apple-feelslike'
+    feelsDiv.className = 'apple-feels-like'
     feelsDiv.textContent = `Feels like ${currentWeather.feelsLikeTemp}${degreeLabel}`
 
     const tempBlock = document.createElement('div')
