@@ -1,4 +1,4 @@
-let data;
+//let data;
 
 Module.register("MMM-OneCallWeather", {
   defaults: {
@@ -29,34 +29,12 @@ Module.register("MMM-OneCallWeather", {
     scale: false,
     exclude: "minutely",
 
-    tableClass: "small",
     iconset: "4a",
     iconsetFormat: "png",
 
-    onlyTemp: false,
-    maxHourliesToShow: 30,
-    maxDailiesToShow: 6,
-    colored: true,
+    maxHourliesToShow: 7,
+    maxDailiesToShow: 5,
     roundTemp: true,
-
-    labelOrdinals: [
-      "N",
-      "NNE",
-      "NE",
-      "ENE",
-      "E",
-      "ESE",
-      "SE",
-      "SSE",
-      "S",
-      "SSW",
-      "SW",
-      "WSW",
-      "W",
-      "WNW",
-      "NW",
-      "NNW"
-    ],
     moduleTimestampIdPrefix: "OPENWEATHER_ONE_CALL_TIMESTAMP_"
   },
 
@@ -69,8 +47,7 @@ Module.register("MMM-OneCallWeather", {
       this.file("node_modules/dayjs/dayjs.min.js"),
       this.file("node_modules/dayjs/plugin/isBetween.js"),
       this.file("node_modules/dayjs/plugin/utc.js"),
-      this.file(`node_modules/dayjs/locale/${config.language}.js`),
-      "weatherobject.js"
+      this.file(`node_modules/dayjs/locale/${config.language}.js`)
     ];
   },
 
@@ -95,6 +72,7 @@ Module.register("MMM-OneCallWeather", {
     dayjs.extend(window.dayjs_plugin_isBetween);
     dayjs.extend(window.dayjs_plugin_utc);
     this.forecast = [];
+    
     this.loaded = false;
     this.scheduleUpdate(this.config.initialLoadDelay);
     this.updateTimer = null;
@@ -122,28 +100,27 @@ Module.register("MMM-OneCallWeather", {
       longitude: this.config.longitude,
       units: this.config.units,
       language: this.config.language,
-      requestDelay: this.config.requestDelay
+      requestDelay: this.config.requestDelay,
+      sensorType: this.config.sensorType,
+      sensorPin: this.config.sensorPin
     });
   },
-  // Log.debug("node received");
 
   socketNotificationReceived (notification, payload) {
-    // Log.debug("got some data back");
-
     if (notification === "OPENWEATHER_ONECALL_DATA") {
-      // process weather data
-      data = payload;
-      this.forecast = this.processOnecall(data);
+      Log.info("Received notification: " + notification)
+      
+      this.forecast = this.processOnecall(payload);
       this.loaded = true;
-      this.updateDom(); // this.config.updateFadeSpeed
+      this.updateDom();
       this.scheduleUpdate();
     }
   },
 
-  processOnecall () {
+  processOnecall (data) {
     let precip = false;
     let wsfactor = 2.237;
-    const current = [];
+    let currently;
     if (this.config.windUnits === "kmph") {
       wsfactor = 3.6;
     } else if (this.config.windUnits === "ms") {
@@ -151,29 +128,20 @@ Module.register("MMM-OneCallWeather", {
     }
 
     if (Object.hasOwn(data, "current")) {
-      const currently = {
+      currently = {
         date: dayjs.unix(data.current.dt).utcOffset(data.timezone_offset / 60),
         dayOfWeek: dayjs.unix(data.current.dt).format("ddd"),
         windSpeed: (data.current.wind_speed * wsfactor).toFixed(0),
         windDirection: data.current.wind_deg,
         sunrise: dayjs.unix(data.current.sunrise).utcOffset(data.timezone_offset / 60),
         sunset: dayjs.unix(data.current.sunset).utcOffset(data.timezone_offset / 60),
-        temperature: this.roundValue(data.current.temp),
+        temperature: data.current.temp.toFixed(1),
         weatherIcon: data.current.weather[0].icon,
-        weatherType: this.convertWeatherType(data.current.weather[0].icon),
         humidity: data.current.humidity,
         feelsLikeTemp: data.current.feels_like.toFixed(1),
-        precipitation: current.rain + current.snow
+        //precipitation: current.rain + current.snow
       };
-      current.push(currently);
     }
-    // Log.debug("current weather is " + JSON.stringify(currently));
-    let weather = new WeatherObject(
-      this.config.units,
-      this.config.tempUnits,
-      this.config.windUnits,
-      this.config.useKmh
-    );
 
     // get hourly weather, if requested
     const hours = [];
@@ -182,30 +150,12 @@ Module.register("MMM-OneCallWeather", {
 
     if (Object.hasOwn(data, "hourly")) {
       for (const hour of data.hourly) {
-        if (
-          Object.hasOwn(hour, "rain") &&
-          !Number.isNaN(hour.rain["1h"])
-        ) {
-          if (this.config.units === "imperial") {
-            weather.rain = hour.rain["1h"] / 25.4;
-          } else {
-            weather.rain = hour.rain["1h"];
-          }
-          precip = true;
+        let precipitation = 0;
+        if (Object.hasOwn(hour, "rain") && !Number.isNaN(hour.rain["1h"])) {
+          precipitation += this.config.units === "imperial" ? hour.rain["1h"] / 25.4 : hour.rain["1h"];
         }
-        if (
-          Object.hasOwn(hour, "snow") &&
-          !Number.isNaN(hour.snow["1h"])
-        ) {
-          if (this.config.units === "imperial") {
-            weather.snow = hour.snow["1h"] / 25.4;
-          } else {
-            weather.snow = hour.snow["1h"];
-          }
-          precip = true;
-        }
-        if (precip) {
-          weather.precipitation = weather.rain + weather.snow;
+        if (Object.hasOwn(hour, "snow") && !Number.isNaN(hour.snow["1h"])) {
+          precipitation += this.config.units === "imperial" ? hour.snow["1h"] / 25.4 : hour.snow["1h"];
         }
 
         forecastData = {
@@ -216,16 +166,9 @@ Module.register("MMM-OneCallWeather", {
           windDirection: hour.wind_deg,
           feelsLikeTemp: hour.feels_like.day,
           weatherIcon: hour.weather[0].icon,
-          weatherType: this.convertWeatherType(hour.weather[0].icon),
-          precipitation: weather.precipitation
+          precipitation: precipitation
         };
         hours.push(forecastData);
-        weather = new WeatherObject(
-          this.config.units,
-          this.config.tempUnits,
-          this.config.windUnits,
-          this.config.useKmh
-        );
       }
     }
 
@@ -235,29 +178,13 @@ Module.register("MMM-OneCallWeather", {
     const days = [];
     if (Object.hasOwn(data, "daily")) {
       for (const day of data.daily) {
-        precip = false;
+        let precipitation = 0;
         if (!Number.isNaN(day.rain)) {
-          if (this.config.units === "imperial") {
-            weather.rain = day.rain / 25.4;
-          } else {
-            weather.rain = day.rain;
-          }
-          precip = true;
+          precipitation += this.config.units === "imperial" ? day.rain / 25.4 : day.rain;
         }
         if (!Number.isNaN(day.snow)) {
-          if (this.config.units === "imperial") {
-            weather.snow = day.snow / 25.4;
-          } else {
-            weather.snow = day.snow;
-          }
-          precip = true;
+          precipitation += this.config.units === "imperial" ? day.snow / 25.4 : day.snow;
         }
-        if (precip) {
-          weather.precipitation = weather.rain + weather.snow;
-        }
-        //
-
-        //
 
         forecastData = {
           dayOfWeek: dayjs.unix(day.dt).format("ddd"),
@@ -271,29 +198,39 @@ Module.register("MMM-OneCallWeather", {
           windDirection: day.wind_deg,
           feelsLikeTemp: day.feels_like.day,
           weatherIcon: day.weather[0].icon,
-          weatherType: this.convertWeatherType(day.weather[0].icon),
-          precipitation: weather.precipitation
+          precipitation: precipitation
         };
 
         days.push(forecastData);
-        weather = new WeatherObject(
-          this.config.units,
-          this.config.tempUnits,
-          this.config.windUnits,
-          this.config.useKmh
-        );
       }
     }
 
+    const indoor = {}
+    if (Object.hasOwn(data, "indoor")) {
+      let indoorTemperature = null
+      if (data.indoor.temperature != null) {
+        indoorTemperature = this.config.units === "imperial" ? 
+        (data.indoor.temperature * 9 / 5 + 32).toFixed(1) : 
+        parseFloat(data.indoor.temperature).toFixed(1);
+      }
+  
+      let indoorHumidity = null
+      if (data.indoor.humidity != null) {
+        indoorHumidity = parseFloat(data.indoor.humidity).toFixed(1);
+      }
+  
+      indoor.temperature = indoorTemperature;
+      indoor.humidity = indoorHumidity;
+    }
+
     // Log.debug("forecast is " + JSON.stringify(days));
-    return {current,
-      hours,
-      days};
+    return {currently, hours, days, indoor};
   },
 
   // Override dom generator.
   getDom () {
     const wrapper = document.createElement("div");
+    wrapper.className = "OCW"
 
     if (this.config.appid === "") {
       wrapper.innerHTML = `Please set the correct openweather <i>appid</i> in the config for module: ${this.name}.`;
@@ -307,27 +244,9 @@ Module.register("MMM-OneCallWeather", {
       return wrapper;
     }
 
-    const table = document.createElement("table");
-    let currentCell1;
-    let currentCell2;
-    let currentCell3;
-    let currentRow1;
-    let currentRow2;
-    let currentRow3;
-    let currentWeather;
-    let currTemperature;
-    let dailyForecast;
-    let hCellData;
-    let hRowData;
-    let largeWeatherIcon;
-    let windContainer;
-    let spacer;
-    let weatherIcon;
-    let windyDirection;
-    let windIcon;
-    let windySpeed;
-    table.className = this.config.tableClass;
-    table.style.borderCollapse = "collapse";
+    const weatherContainer = document.createElement("div");
+    weatherContainer.style.borderCollapse = "collapse";
+    weatherContainer.className = "OCW weather-container"
 
     let degreeLabel = "°";
     if (this.config.scale) {
@@ -348,584 +267,232 @@ Module.register("MMM-OneCallWeather", {
       this.config.decimalSymbol = ".";
     }
 
-    // eslint-disable-next-line default-case
-    switch (this.config.layout) {
-      case "horizontal":
-        Log.debug(`count of data length ${this.forecast.days.length}`);
-        Log.debug(`count of data length ${this.forecast.hours.length}`);
-        hRowData = document.createElement("tr");
-        hCellData = document.createElement("td");
-        hCellData.style.textAlign = "left";
-
-        for (let h = 0; h < this.config.maxHourliesToShow; h += 1) {
-          const hourlyForecast = this.forecast.hours[h];
-          const lineOfData = document.createElement("div");
-          lineOfData.innerHTML = `${dayjs.unix(hourlyForecast.date).format("hhmm")}&nbsp ${
-            hourlyForecast.temperature
-          }${degreeLabel}&nbsp ${hourlyForecast.windSpeed.toFixed(0)}&nbsp ${this.cardinalWindDirection(hourlyForecast.windDirection)}&nbsp ${hourlyForecast.weatherType}<BR>`;
-          hCellData.appendChild(lineOfData);
-        }
-
-        for (let i = 0; i < this.config.maxDailiesToShow; i += 1) {
-          dailyForecast = this.forecast.days[i];
-          const lineOfData = document.createElement("div");
-          lineOfData.innerHTML = `${dailyForecast.dayOfWeek}&nbsp ${
-            dailyForecast.maxTemperature
-          }&nbsp ${dailyForecast.minTemperature}&nbsp ${
-            dailyForecast.windSpeed
-          }&nbsp ${this.cardinalWindDirection(dailyForecast.windDirection)}&nbsp ${dailyForecast.weatherType}<BR>`;
-          hCellData.appendChild(lineOfData);
-        }
-
-        hRowData.appendChild(hCellData);
-        table.appendChild(hRowData);
-        break;
-
-      case "vertical":
-        // eslint-disable-next-line prefer-destructuring
-        currentWeather = this.forecast.current[0];
-        currentRow1 = document.createElement("tr");
-        currentCell1 = document.createElement("td");
-        currentCell1.colSpan = "6";
-        currentCell1.className = "current";
-
-        windContainer = document.createElement("div");
-        windContainer.className = "wind-container normal medium";
-
-        windIcon = document.createElement("img");
-        windIcon.className = "wi wind-icon dimmed";
-        windIcon.src = "modules/MMM-OneCallWeather/icons/8a/wind.svg";
-
-        windContainer.appendChild(windIcon);
-
-        windySpeed = document.createElement("span");
-        windySpeed.innerHTML = ` ${currentWeather.windSpeed}`;
-        windContainer.appendChild(windySpeed);
-
-        if (this.config.showWindDirection) {
-          windyDirection = document.createElement("sup");
-          if (this.config.showWindDirectionAsArrow) {
-            if (currentWeather.windDirection !== null) {
-              windyDirection.innerHTML = ` &nbsp;<i class="fa fa-long-arrow-down" style="transform:rotate(${this.windDeg}deg);"></i>&nbsp;`;
-            }
-          } else {
-            windyDirection.innerHTML = ` ${this.cardinalWindDirection(currentWeather.windDirection)}`; // + currentWeather.windDirection;
-          }
-          windContainer.appendChild(windyDirection);
-        }
-        spacer = document.createElement("span");
-        spacer.innerHTML = "&nbsp;";
-        windContainer.appendChild(spacer);
-
-        currentCell1.appendChild(windContainer);
-        currentRow1.appendChild(currentCell1);
-        table.appendChild(currentRow1);
-
-        currentRow2 = document.createElement("tr");
-        currentCell2 = document.createElement("td");
-        currentCell2.colSpan = "6";
-        currentCell2.className = "current";
-
-        largeWeatherIcon = document.createElement("div");
-        largeWeatherIcon.className = "large-weather-icon-container light";
-
-        weatherIcon = document.createElement("img");
-        weatherIcon.className = `wi weathericon wi-${currentWeather.weatherIcon}`;
-        weatherIcon.src = `modules/MMM-OneCallWeather/icons/${this.config.iconset}/${currentWeather.weatherIcon}.${this.config.iconsetFormat}`;
-        largeWeatherIcon.appendChild(weatherIcon);
-
-        currTemperature = document.createElement("div");
-        currTemperature.className = "large bright";
-
-        if (this.config.tempUnits === "f") {
-          currTemperature.innerHTML = ` ${(
-            currentWeather.temperature * (9 / 5) +
-            32
-          ).toFixed(0)}${degreeLabel}`;
-        } else {
-          currTemperature.innerHTML = ` ${currentWeather.temperature}${degreeLabel}`;
-        }
-        currTemperature.style.verticalAlign = "middle";
-        currTemperature.style.right = "0px";
-
-        largeWeatherIcon.appendChild(currTemperature);
-
-        currentCell2.appendChild(largeWeatherIcon);
-        currentRow2.appendChild(currentCell2);
-        table.appendChild(currentRow2);
-
-        currentRow3 = document.createElement("tr");
-        currentCell3 = document.createElement("td");
-        currentCell3.colSpan = "6";
-        currentCell3.className = "current";
-
-        if (this.config.showFeelsLike && this.config.onlyTemp === false) {
-          windContainer = document.createElement("div");
-          windContainer.className = "wind-container small dimmed";
-
-          const currFeelsLike = document.createElement("span");
-          currFeelsLike.className = "small dimmed";
-          if (this.config.tempUnits === "f") {
-            currFeelsLike.innerHTML = ` ${(
-              currentWeather.feelsLikeTemp * (9 / 5) +
-              32
-            ).toFixed(0)}${degreeLabel}`;
-          } else {
-            currFeelsLike.innerHTML = `${this.translate("FEELS_LIKE")} ${currentWeather.feelsLikeTemp}${degreeLabel}`;
-          }
-          windContainer.appendChild(currFeelsLike);
-          currentCell1.appendChild(windContainer);
-        }
-
-        currentCell3.appendChild(windContainer);
-        currentRow3.appendChild(currentCell3);
-        table.appendChild(currentRow3);
-
-        for (let i = 0; i < this.config.maxDailiesToShow; i += 1) {
-          // Log.debug("count of data length " + this.forecast.days.length);
-          dailyForecast = this.forecast.days[i];
-
-          const row = document.createElement("tr");
-          row.style.textAlign = "center";
-
-          if (this.config.colored) {
-            row.className = "colored";
-          }
-          table.appendChild(row);
-
-          const dayCell = document.createElement("td");
-          dayCell.className = "day";
-          dayCell.innerHTML = dailyForecast.dayOfWeek;
-          row.appendChild(dayCell);
-
-          const iconCell = document.createElement("td");
-          iconCell.className = "bright weather-icon";
-          const icon = document.createElement("span");
-          const iconImg = document.createElement("img");
-          iconImg.src = `modules/MMM-OneCallWeather/icons/${this.config.iconset}/${dailyForecast.weatherIcon}.${this.config.iconsetFormat}`;
-
-          iconImg.style.height = "auto";
-          iconImg.style.maxWidth = "44px";
-
-          iconImg.style.display = "inline";
-          icon.appendChild(iconImg);
-          iconCell.appendChild(icon);
-          row.appendChild(iconCell);
-
-          const maxTempCell = document.createElement("td");
-          maxTempCell.innerHTML = dailyForecast.maxTemperature + degreeLabel;
-          maxTempCell.className = "bright max-temp";
-          row.appendChild(maxTempCell);
-
-          const minTempCell = document.createElement("td");
-          minTempCell.innerHTML = dailyForecast.minTemperature + degreeLabel;
-          minTempCell.className = "min-temp";
-          row.appendChild(minTempCell);
-
-          const windIconCell = document.createElement("td");
-          windIconCell.className = "bright weather-icon";
-          windIcon = document.createElement("span");
-          const windIconImg = document.createElement("img");
-          windIconImg.src = "modules/MMM-OneCallWeather/windicon/winddisc.svg";
-
-          windIconImg.style.position = "absolute";
-          windIconImg.style.transform = `rotate(${dailyForecast.windDirection}deg) `;
-          windIconImg.style.marginLeft = "0.1rem";
-          windIconImg.style.marginTop = "-1.1rem";
-
-          windIcon.appendChild(windIconImg);
-          windIconCell.appendChild(windIcon);
-          row.appendChild(windIconCell);
-
-          const windTextCell = document.createElement("td");
-          windTextCell.className = "bright weather-icon";
-          windTextCell.innerText = dailyForecast.windSpeed;
-          windTextCell.style.position = "relative";
-          windTextCell.style.color = "black";
-
-          row.appendChild(windTextCell);
-
-          if (this.config.showRainAmount) {
-            const rainCell = document.createElement("td");
-            if (Number.isNaN(dailyForecast.precipitation)) {
-              rainCell.innerHTML = "";
-            } else if (config.units !== "imperial") {
-              rainCell.innerHTML = `${parseFloat(dailyForecast.precipitation).toFixed(1)} mm`;
-            } else {
-              rainCell.innerHTML = `${(
-                parseFloat(dailyForecast.precipitation) / 25.4
-              ).toFixed(2)} in`;
-            }
-            rainCell.className = "align-right bright rain";
-            row.appendChild(rainCell);
-          }
-        }
-        break;
-      case "default":
-        // eslint-disable-next-line prefer-destructuring
-        currentWeather = this.forecast.current[0];
-        currentRow1 = document.createElement("tr");
-        currentCell1 = document.createElement("td");
-        currentCell1.colSpan = this.config.maxDailiesToShow;
-        currentCell1.className = "current";
-
-        windContainer = document.createElement("div");
-        windContainer.className = "wind-container normal medium";
-
-        windIcon = document.createElement("img");
-        windIcon.className = "wi wind-icon dimmed";
-        windIcon.src = "modules/MMM-OneCallWeather/icons/8a/wind.svg";
-
-        windContainer.appendChild(windIcon);
-
-        windySpeed = document.createElement("span");
-        if (this.config.useBeaufortInCurrent) {
-          this.convSpd = this.mph2Beaufort(currentWeather.windSpeed);
-          windySpeed.innerHTML = `F${this.convSpd}`;
-        } else {
-          windySpeed.innerHTML = ` ${currentWeather.windSpeed}`;
-        }
-        windContainer.appendChild(windySpeed);
-
-        if (this.config.showWindDirection) {
-          windyDirection = document.createElement("sup");
-          if (this.config.showWindDirectionAsArrow) {
-            if (currentWeather.windDirection !== null) {
-              windyDirection.innerHTML = ` &nbsp;<i class="fa fa-long-arrow-down" style="transform:rotate(${this.windDeg}deg);"></i>&nbsp;`;
-            }
-          } else {
-            windyDirection.innerHTML = ` ${this.cardinalWindDirection(currentWeather.windDirection)}`; // + currentWeather.windDirection;
-          }
-          windContainer.appendChild(windyDirection);
-        }
-        spacer = document.createElement("span");
-        spacer.innerHTML = "&nbsp;";
-        windContainer.appendChild(spacer);
-
-        currentCell1.appendChild(windContainer);
-        currentRow1.appendChild(currentCell1);
-        table.appendChild(currentRow1);
-
-        currentRow2 = document.createElement("tr");
-        currentCell2 = document.createElement("td");
-        currentCell2.colSpan = this.config.maxDailiesToShow;
-        currentCell2.className = "current";
-
-        largeWeatherIcon = document.createElement("div");
-        largeWeatherIcon.className = "large-weather-icon-container light";
-
-        if (this.config.decimalSymbol === "") {
-          this.config.decimalSymbol = ".";
-        }
-
-        weatherIcon = document.createElement("img");
-        weatherIcon.className = `wi weathericon wi-${currentWeather.weatherIcon}`;
-        weatherIcon.src = `modules/MMM-OneCallWeather/icons/${this.config.iconset}/${currentWeather.weatherIcon}.${this.config.iconsetFormat}`;
-        largeWeatherIcon.appendChild(weatherIcon);
-
-        currTemperature = document.createElement("span");
-        currTemperature.className = "large bright";
-        if (this.config.tempUnits === "f") {
-          currTemperature.innerHTML = ` ${(
-            currentWeather.temperature * (9 / 5) +
-            32
-          ).toFixed(0)}${degreeLabel}`;
-        } else {
-          currTemperature.innerHTML = ` ${currentWeather.temperature}${degreeLabel}`;
-        }
-        currTemperature.style.verticalAlign = "middle";
-
-        largeWeatherIcon.appendChild(currTemperature);
-
-        currentCell2.appendChild(largeWeatherIcon);
-        currentRow2.appendChild(currentCell2);
-        table.appendChild(currentRow2);
-
-        currentRow3 = document.createElement("tr");
-        currentCell3 = document.createElement("td");
-        currentCell3.colSpan = this.config.maxDailiesToShow;
-        currentCell3.className = "current";
-
-        if (this.config.showFeelsLike && this.config.onlyTemp === false) {
-          windContainer = document.createElement("div");
-          windContainer.className = "wind-container small dimmed";
-          const currFeelsLike = document.createElement("span");
-          currFeelsLike.className = "small dimmed";
-          currFeelsLike.innerHTML = `${this.translate("FEELS_LIKE")} ${currentWeather.feelsLikeTemp}${degreeLabel}`; // + "<BR>Last update" +  dayjs.unix(currentWeather.date).format("LT");
-
-          windContainer.appendChild(currFeelsLike);
-          currentCell1.appendChild(windContainer);
-        }
-        currentCell3.appendChild(windContainer);
-        currentRow3.appendChild(currentCell3);
-        table.appendChild(currentRow3);
-
-        for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
-          // Log.debug("count of data length " + this.forecast.days.length);
-          dailyForecast = this.forecast.days[j];
-
-          const row = document.createElement("td");
-
-          if (this.config.colored) {
-            row.className = "colored";
-          }
-          table.appendChild(row);
-
-          const dayCell = document.createElement("tr");
-          dayCell.className = "day";
-          dayCell.innerHTML = dailyForecast.dayOfWeek;
-          row.appendChild(dayCell);
-
-          const iconCell = document.createElement("tr");
-          iconCell.className = "bright weather-icon";
-          const icon = document.createElement("span");
-          const iconImg = document.createElement("img");
-          iconImg.src = `modules/MMM-OneCallWeather/icons/${this.config.iconset}/${dailyForecast.weatherIcon}.${this.config.iconsetFormat}`;
-
-          iconImg.style.height = "auto";
-          iconImg.style.maxWidth = "44px";
-
-          iconImg.style.display = "inline";
-          icon.appendChild(iconImg);
-          iconCell.appendChild(icon);
-          row.appendChild(iconCell);
-
-          if (
-            this.config.decimalSymbol === "" ||
-            this.config.decimalSymbol === " "
-          ) {
-            this.config.decimalSymbol = ".";
-          }
-
-          const maxTempCell = document.createElement("tr");
-
-          maxTempCell.innerHTML = dailyForecast.maxTemperature + degreeLabel;
-          maxTempCell.className = "bright max-temp";
-          row.appendChild(maxTempCell);
-
-          const minTempCell = document.createElement("tr");
-          if (this.config.tempUnits === "f") {
-            minTempCell.innerHTML = ` ${(
-              dailyForecast.minTemperature * (9 / 5) +
-              32
-            ).toFixed(0)}${degreeLabel}`;
-          } else {
-            minTempCell.innerHTML = dailyForecast.minTemperature + degreeLabel;
-          }
-          minTempCell.className = "min-temp";
-          row.appendChild(minTempCell);
-
-          const windIconCell = document.createElement("tr");
-          windIconCell.className = "bright weather-icon";
-          windIcon = document.createElement("span");
-          const windIconImg = document.createElement("img");
-          windIconImg.src = "modules/MMM-OneCallWeather/windicon/winddisc.svg";
-
-          windIconImg.style.transform = `rotate(${dailyForecast.windDirection}deg)`;
-          windIconImg.style.display = "inline";
-          windIcon.appendChild(windIconImg);
-          windIconCell.appendChild(windIcon);
-          row.appendChild(windIconCell);
-
-          const windTextCell = document.createElement("tr");
-          windTextCell.className = "bright weather-icon";
-          const windSpeed = document.createElement("p");
-          windSpeed.className = "wind-speed";
-          windSpeed.innerText = dailyForecast.windSpeed;
-
-          windTextCell.appendChild(windSpeed);
-          row.appendChild(windTextCell);
-
-          if (this.config.showRainAmount) {
-            const rainCell = document.createElement("td");
-            if (Number.isNaN(dailyForecast.precipitation)) {
-              rainCell.innerHTML = "";
-            } else if (config.units !== "imperial") {
-              rainCell.innerHTML = `${parseFloat(dailyForecast.precipitation).toFixed(1)} mm`;
-            } else {
-              rainCell.innerHTML = `${(
-                parseFloat(dailyForecast.precipitation) / 25.4
-              ).toFixed(2)} in`;
-            }
-            rainCell.className = "align-right bright rain";
-            row.appendChild(rainCell);
-          }
-        }
-
-        break;
+    // current temps
+    createCurrentWeatherDom.call(this);
+
+    // daily forecast
+    const [globalMinTemp, globalMaxTemp] = calculateForestMaxMinTemps.call(this);
+
+    const forecastContainer = document.createElement("div");
+    forecastContainer.className = "weather-forecast-container";
+
+    let dailyForecast;
+    for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {          
+      dailyForecast = this.forecast.days[j];
+      createForecastDayBarsDom.call(this, dailyForecast, globalMinTemp, globalMaxTemp, forecastContainer);      
     }
-    return table;
-  },
+  
+    weatherContainer.appendChild(forecastContainer);
+    
+    return weatherContainer;
 
-  getOrdinal (bearing) {
-    return this.config.labelOrdinals[Math.round(bearing * 16 / 360) % 16];
-  },
-
-  cardinalWindDirection (windDir) {
-    if (windDir > 11.25 && windDir <= 33.75) {
-      return "NNE";
-    }
-    if (windDir > 33.75 && windDir <= 56.25) {
-      return "NE";
-    }
-    if (windDir > 56.25 && windDir <= 78.75) {
-      return "ENE";
-    }
-    if (windDir > 78.75 && windDir <= 101.25) {
-      return "E";
-    }
-    if (windDir > 101.25 && windDir <= 123.75) {
-      return "ESE";
-    }
-    if (windDir > 123.75 && windDir <= 146.25) {
-      return "SE";
-    }
-    if (windDir > 146.25 && windDir <= 168.75) {
-      return "SSE";
-    }
-    if (windDir > 168.75 && windDir <= 191.25) {
-      return "S";
-    }
-    if (windDir > 191.25 && windDir <= 213.75) {
-      return "SSW";
-    }
-    if (windDir > 213.75 && windDir <= 236.25) {
-      return "SW";
-    }
-    if (windDir > 236.25 && windDir <= 258.75) {
-      return "WSW";
-    }
-    if (windDir > 258.75 && windDir <= 281.25) {
-      return "W";
-    }
-    if (windDir > 281.25 && windDir <= 303.75) {
-      return "WNW";
-    }
-    if (windDir > 303.75 && windDir <= 326.25) {
-      return "NW";
-    }
-    if (windDir > 326.25 && windDir <= 348.75) {
-      return "NNW";
-    }
-    return "N";
-  },
-
-  convertOpenWeatherIdToIcon (id, openweatherIcon) {
-    if (id >= 200 && id < 300) {
-      // Thunderstorm
-      return "thunderstorm";
-    }
-    if (id >= 300 && id < 400) {
-      // Drizzle
-      return "rain";
-    }
-    if (id === 511) {
-      // Rain - freezing rain
-      return "sleet";
-    }
-    if (id >= 500 && id < 600) {
-      // Rain
-      return "rain";
-    }
-    if (id >= 610 && id < 620) {
-      // Snow - sleet or with rain
-      return "sleet";
-    }
-    if (id >= 600 && id < 700) {
-      // Snow
-      return "snow";
-    }
-    if (id === 781) {
-      // Atmosphere - tornado
-      return "tornado";
-    }
-    if (id >= 700 && id < 800) {
-      // Atmosphere
-      return "fog";
-    }
-    if (id >= 800 && id < 810) {
-      const isDay = openweatherIcon.slice(-1) === "d";
-
-      if (id === 800) {
-        // Clear
-        if (isDay) {
-          return "clear-day";
-        }
-        return "clear-night";
+    function calculateForestMaxMinTemps() {
+      let globalMinTemp = 50;
+      let globalMaxTemp = 0;
+      for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
+        this.dailyForecast = this.forecast.days[j];
+        const currentMinTemp = parseInt(this.dailyForecast.minTemperature);
+        const currentMaxTemp = parseInt(this.dailyForecast.maxTemperature);
+  
+        globalMinTemp = Math.min(globalMinTemp, currentMinTemp);
+        globalMaxTemp = Math.max(globalMaxTemp, currentMaxTemp);
       }
-      if (id === 801 || id === 802) {
-        // Clouds - few or scattered
-        if (isDay) {
-          return "partly-cloudy-day";
+
+      return [globalMinTemp, globalMaxTemp];
+    } 
+
+    function createForecastDayBarsDom(dailyForecast, globalMinTemp, globalMaxTemp, forecastContainer) {
+      const forecastDayRowContainer = document.createElement("div");
+      forecastDayRowContainer.className = "forecast-row";
+
+      {
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+        dayDiv.innerHTML = dailyForecast.dayOfWeek;
+        forecastDayRowContainer.appendChild(dayDiv);
+      }
+      {
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "icon";
+        iconDiv.style = `background-image: url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${dailyForecast.weatherIcon}.${this.config.iconsetFormat}');`;
+        forecastDayRowContainer.appendChild(iconDiv);
+      }
+      {
+        const minTempDiv = document.createElement("div");
+        minTempDiv.className = "low-temp";
+        minTempDiv.innerHTML = `${dailyForecast.minTemperature}${degreeLabel}`;
+        forecastDayRowContainer.appendChild(minTempDiv);
+      }
+      {
+        const tempBarDiv = document.createElement("div");
+        tempBarDiv.className = "temp-bar";
+
+        const tempBarFillDiv = document.createElement("div");
+        tempBarFillDiv.className = "fill";
+
+        // calculates the bar color gradient
+        const minTemp = parseInt(dailyForecast.minTemperature);
+        const maxTemp = parseInt(dailyForecast.maxTemperature);
+
+        const tempRange = maxTemp - minTemp;
+        const colorStops = [];
+        for (let t = minTemp; t <= maxTemp; t++) {
+          const color = this.getTemperatureColor(t);
+          const position = ((t - minTemp) / tempRange) * 100;
+          colorStops.push(`${color} ${position}%`);
         }
-        return "partly-cloudy-night";
+
+        // Create the gradient string
+        const gradientString = `linear-gradient(to right, ${colorStops.join(', ')})`;
+
+        // Apply styles dynamically
+        const minDiff = minTemp - globalMinTemp;
+        const maxDiff = globalMaxTemp - maxTemp;
+
+        const a = (minDiff / (globalMaxTemp - globalMinTemp)) * 100;
+        const b = (maxDiff / (globalMaxTemp - globalMinTemp)) * 100;
+
+        tempBarFillDiv.style.marginLeft = `${a}px`;
+        tempBarFillDiv.style.marginRight = `${b}px`;
+        tempBarFillDiv.style.background = gradientString; // Set gradient color
+
+        tempBarDiv.appendChild(tempBarFillDiv);
+        forecastDayRowContainer.appendChild(tempBarDiv);
       }
-      if (id === 803 || id === 804) {
-        // Clouds - broken or overcast
-        return "cloudy";
+      {
+        const maxTempDiv = document.createElement("div");
+        maxTempDiv.className = "high-temp";
+        maxTempDiv.innerHTML = `${dailyForecast.maxTemperature}${degreeLabel}`;
+        forecastDayRowContainer.appendChild(maxTempDiv);
       }
+
+      forecastContainer.appendChild(forecastDayRowContainer);
+      
     }
-    return false;
+
+    function createCurrentWeatherDom() {
+      const currentWeather = this.forecast.currently;
+      const indoorConditions = this.forecast.indoor;
+
+      const currentLocationContainer = document.createElement("div");
+      currentLocationContainer.className = "location-text";
+      currentLocationContainer.innerHTML = this.config.displayName;
+
+      const currentWeatherIconContainer = document.createElement("div");
+      currentWeatherIconContainer.className = "current-weather-icon";
+      currentWeatherIconContainer.style = `background-image: url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${currentWeather.weatherIcon}.${this.config.iconsetFormat}');`;
+
+      const currentTempContainer = document.createElement("div");
+      currentTempContainer.className = 'current-temperature';
+      currentTempContainer.innerHTML = `${currentWeather.temperature}${degreeLabel}`;
+
+      const currentFeelsLikeContainer = document.createElement("div");
+      currentFeelsLikeContainer.className = "current-feelslike";
+      currentFeelsLikeContainer.innerHTML = `Feels like ${currentWeather.feelsLikeTemp}${degreeLabel}`;
+
+      const currentTempFeelsLikeContainer = document.createElement("div");
+      currentTempFeelsLikeContainer.className = "current-temp-feelslike";
+      currentTempFeelsLikeContainer.appendChild(currentTempContainer);
+      currentTempFeelsLikeContainer.appendChild(currentFeelsLikeContainer);
+
+      const comboContainer = document.createElement("div");
+      comboContainer.className = 'current-combo';
+      comboContainer.appendChild(currentWeatherIconContainer);
+      comboContainer.appendChild(currentTempFeelsLikeContainer);
+
+      const indoorConditionsContainer = document.createElement("div");
+      indoorConditionsContainer.className = 'current-indoor';
+      indoorConditionsContainer.innerHTML = `Indoor: ${indoorConditions.temperature != null ? indoorConditions.temperature + degreeLabel : "Not Available"}`;
+
+      const hourlyForecastContainer = document.createElement("div");
+      hourlyForecastContainer.className = 'hourly-forecast';
+
+      for (let j = 1; j < this.config.maxHourliesToShow; j += 1) {          
+        const hourForecast = this.forecast.hours[j];
+        
+        const hourDiv = document.createElement("div");
+        hourDiv.className = "hourly-hour";
+        hourDiv.innerHTML = hourForecast.date.hour()
+      
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "hourly-icon";
+        iconDiv.style = `background-image: url('modules/MMM-OneCallWeather/icons/${this.config.iconset}/${hourForecast.weatherIcon}.${this.config.iconsetFormat}');`;
+        
+        const temperatureDiv = document.createElement("div");
+        temperatureDiv.className = "hourly-temperature";
+        temperatureDiv.innerHTML = hourForecast.temperature.toFixed(0) + degreeLabel
+
+        const hourForecastContainer = document.createElement("div");
+        hourForecastContainer.appendChild(hourDiv);
+        hourForecastContainer.appendChild(iconDiv);
+        hourForecastContainer.appendChild(temperatureDiv);
+
+        hourlyForecastContainer.appendChild(hourForecastContainer);
+      }
+      
+      const currentWeatherContainer = document.createElement("div");
+      currentWeatherContainer.className = "current-weather";
+
+      //currentWeatherContainer.appendChild(currentLocationContainer);
+      currentWeatherContainer.appendChild(comboContainer);
+      currentWeatherContainer.appendChild(hourlyForecastContainer);
+      //currentWeatherContainer.appendChild(currentFeelsLikeContainer);
+      //currentWeatherContainer.appendChild(indoorConditionsContainer);
+      weatherContainer.appendChild(currentWeatherContainer);
+    }
   },
 
   roundValue (temperature) {
-    const decimals = this.config.roundTemp
-      ? 0
-      : 1;
+    const decimals = this.config.roundTemp ? 0 : 1;
     return parseFloat(temperature).toFixed(decimals);
   },
 
-  /*
-   * Convert the OpenWeatherMap icons to a more usable name.
-   */
-  convertWeatherType (weatherType) {
-    const weatherTypes = {
-      "01d": "day-clear-sky",
-      "02d": "day-few-clouds",
-      "03d": "day-scattered-clouds",
-      "04d": "day-broken-clouds",
-      "09d": "day-shower-rain",
-      "10d": "day-rain",
-      "11d": "day-thunderstorm",
-      "13d": "day-snow",
-      "50d": "day-mist",
-      "01n": "night-clear-sky",
-      "02n": "night-few-clouds",
-      "03n": "night-scattered-clouds",
-      "04n": "night-broken-clouds",
-      "09n": "night-shower-rain",
-      "10n": "night-rain",
-      "11n": "night-thunderstorm",
-      "13n": "night-snow",
-      "50n": "night-mist"
-    };
+  getTemperatureColor(temperature) {
+    // Define the temperature-color mapping
+    const tempColorMap = [
+        { temp: 0, color: "#5ecde8" },
+        { temp: 5, color: "#60cfe0" },
+        { temp: 10, color: "#64d3d3" },
+        { temp: 15, color: "#8bd4ba" },
+        { temp: 20, color: "#d9d170" },
+        { temp: 25, color: "#ffbd01" },
+        { temp: 30, color: "#ff811a" },
+        { temp: 35, color: "#ff592b" },
+        { temp: 40, color: "#e83328" },
+        { temp: 45, color: "#8e2825" },
+    ];
 
-    return Object.hasOwn(weatherTypes, weatherType)
-      ? weatherTypes[weatherType]
-      : null;
-  },
+    // Helper function to interpolate between two colors
+    function interpolateColor(color1, color2, factor) {
+        const c1 = parseInt(color1.slice(1), 16); // Convert hex to integer
+        const c2 = parseInt(color2.slice(1), 16);
+        const r1 = (c1 >> 16) & 0xff, g1 = (c1 >> 8) & 0xff, b1 = c1 & 0xff;
+        const r2 = (c2 >> 16) & 0xff, g2 = (c2 >> 8) & 0xff, b2 = c2 & 0xff;
 
-  /*
-   * ms2Beaufort(ms)
-   * Converts m2 to beaufort (windspeed).
-   *
-   * see:
-   *  https://www.spc.noaa.gov/faq/tornado/beaufort.html
-   *  https://en.wikipedia.org/wiki/Beaufort_scale#Modern_scale
-   *
-   * argument ms number - Windspeed in m/s.
-   *
-   * return number - Windspeed in beaufort.
-   */
-  mph2Beaufort (mph) {
-    const kmh = mph * 1.60934;
-    const speeds = [1, 5, 11, 19, 28, 38, 49, 61, 74, 88, 102, 117, 1000];
-    for (const beaufort of speeds) {
-      const speed = speeds[beaufort];
-      if (speed > kmh) {
-        return beaufort;
-      }
+        // Interpolate each channel
+        const r = Math.round(r1 + factor * (r2 - r1));
+        const g = Math.round(g1 + factor * (g2 - g1));
+        const b = Math.round(b1 + factor * (b2 - b1));
+
+        // Convert back to hex
+        return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
     }
-    return 12;
+
+    // Find the temperature range
+    for (let i = 0; i < tempColorMap.length - 1; i++) {
+        const lower = tempColorMap[i];
+        const upper = tempColorMap[i + 1];
+
+        if (temperature >= lower.temp && temperature <= upper.temp) {
+            // Calculate the interpolation factor
+            const factor = (temperature - lower.temp) / (upper.temp - lower.temp);
+            return interpolateColor(lower.color, upper.color, factor);
+        }
+    }
+
+    // If the temperature is out of bounds, return the nearest bound color
+    if (temperature < tempColorMap[0].temp) return tempColorMap[0].color;
+    if (temperature > tempColorMap[tempColorMap.length - 1].temp) return tempColorMap[tempColorMap.length - 1].color;
   }
+  
 });

@@ -1,42 +1,149 @@
-.MMM-OneCallWeather .day,
-.MMM-OneCallWeather .max-temp,
-.MMM-OneCallWeather .min-temp,
-.MMM-OneCallWeather .wind-speed {
-  text-align: center;
-}
-
-.MMM-OneCallWeather .colored > .max-temp {
-  color: #ff5f5f;
-}
-
-.MMM-OneCallWeather .colored > .min-temp {
-  color: #5f5fff;
-}
-
-.MMM-OneCallWeather .weathericon {
-  align-items: center;
+.OCW.weather-container {
   display: flex;
-  float: left;
-  height: 4rem;
-  justify-content: center;
-  width: auto;
-  vertical-align: middle;
-  margin-left: 20px;
-  margin-right: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.MMM-OneCallWeather .weather-icon > span > img {
-  min-width: 2rem;
-  margin: 0 0.1rem;
+.OCW .weather-forecast-container {
+  padding-left: 20px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  width: 250px;
+  align-self: flex-end;
 }
 
-.MMM-OneCallWeather .large-weather-icon-container,
-.wind-container {
+/* Header styling */
+.OCW .header {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* Forecast row container */
+.OCW .forecast-row {
+  display: grid;
+  grid-template-columns: 15% 20% 10% 45% 10%; /* Columns for day, icon, low temp, bar, and high temp */
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Light border between rows */
+}
+
+/* Day name styling */
+.OCW .day {
+  font-size: 16px;
+  font-weight: bold;
+  color: #555;
+  text-align: left;
+}
+
+/* Weather icon */
+.OCW .icon {
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 10px;
+}
+
+.OCW .hourly-icon {
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Temperature styling */
+.OCW .low-temp, .OCW .high-temp {
+  font-size: 14px;
+  font-weight: bold;
   text-align: center;
 }
 
-.MMM-OneCallWeather .wind-speed {
-  color: black;
+/* Temperature bar container */
+.OCW .temp-bar {
+  width: 100px; /* Bar takes up its allocated column width */
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1); /* Light background for the bar */
+  border-radius: 3px;
   position: relative;
-  top: -58px;
+  overflow: hidden;
+}
+
+/* Filled part of the temperature bar */
+.OCW .fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  background: linear-gradient(to right, #00a8ff, #ff0000); /* Default gradient */
+}
+
+.OCW .current-weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 400px;
+  text-align: center;
+  border-right: 2px solid #000;
+  margin-right: 10px;
+}
+
+.OCW .location-text {
+  width: 200px;
+  color: black;
+}
+
+.OCW .current-combo {
+  display: flex;
+  width: 400px;
+  align-items: center;
+  height: 130px;
+}
+
+.OCW .current-weather-icon {
+  width: 80%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.OCW .current-temp-feelslike {
+  width: 100%;
+}
+
+.OCW .current-temperature {
+  font-size: 65px;
+  font-weight: bold;
+  color: black;
+  line-height: normal;
+}
+
+.OCW .current-feelslike {
+  font-size: 20px;
+  font-weight: normal;
+  color: black;
+}
+
+.OCW .current-indoor {
+  font-size: 20px;
+  color: black;
+  width: 200px;
+  margin-top: auto;
+  margin-left: auto;
+  margin-right: 32px;
+  height: 20px;
+}
+
+.OCW .hourly-forecast {
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  color: black;
+  gap: 12px;
+  border-top: #333 solid 1px;
+  padding-top: 10px;
+}
+
+.region.bottom .module {
+  margin-bottom: -20px;
 }
