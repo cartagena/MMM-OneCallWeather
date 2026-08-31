@@ -1,12 +1,17 @@
 # MMM-OneCallWeather
 
-This is a weather module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror). It displays the weather forecast for the coming week - spanning from left to right, each day with its own icon and details,like the minimum and maximum temperature.
+This is a weather module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) that displays current conditions and a detailed forecast for the coming week using the OpenWeatherMap One Call API.
 
-It is based somewhat around <https://github.com/jharttech/MMM-weatherforecast> and the default 'weather' app.
+**Key features:**
 
-The software is designed around a display in Celsius and miles per hour, but should work in a multitude of units.
+- Current weather with alerts and wind information
+- Customizable forecast layout (columns or rows)
+- Separate rain and snow display with color coding
+- Temperature-based snow depth calculation with scientific ratios
+- Flexible units (metric/imperial) and multiple icon sets
+- Time-windowed weather alerts with automatic deduplication
 
-The app uses data from the currently-free source of openweathermap.org, using their one-call API - <https://openweathermap.org/api/one-call-api>.
+The module offers extensive configuration options and works seamlessly with both Celsius/metric and Fahrenheit/imperial units.
 
 ## Project status
 
@@ -14,13 +19,27 @@ Since the original author of the module, [Captsi](https://github.com/Captsi), is
 
 **This module is in maintenance mode.** So I'm not planning any functional changes. If someone wants to take over the further development, I would be happy. PR's are welcome too!
 
-## Screenshot
+## Screenshots
 
-![Example: Default layout](screenshot.png)
+**Vertical arrangement with columns layout**
+
+![Vertical arrangement with columns layout](screenshot_1_vertical_columns.png)
+
+**Vertical arrangement with rows layout**
+
+![Vertical arrangement with rows layout](screenshot_2_vertical_rows.png)
+
+**Horizontal arrangement with columns layout**
+
+![Horizontal arrangement with columns layout](screenshot_3_horizontal_columns.png)
+
+**Horizontal arrangement with rows layout**
+
+![Horizontal arrangement with rows layout](screenshot_4_horizontal_rows.png)
 
 ## Installation
 
-In your terminal, go to your MagicMirror's module directory:
+In your terminal, go the modules directory:
 
 ```sh
 cd ~/MagicMirror/modules
@@ -29,14 +48,7 @@ cd ~/MagicMirror/modules
 Clone this repository:
 
 ```sh
-git clone https://github.com/KristjanESPERANTO/MMM-OneCallWeather
-```
-
-Install the dependencies:
-
-```sh
-cd MMM-OneCallWeather
-npm ci
+git clone https://github.com/MagicMirrorModules/MMM-OneCallWeather
 ```
 
 Go to <https://openweathermap.org/api> and subscribe to One Call API. Its free to set up an account, and the free subscription level is fine for this app. The API returns a lot of information and can return 1000 calls a day on the free subscription level (approx once every 2 minutes maximum). The API is good as it uses their algorithms to give ultra local weather reports, even if you don't live in a named location, which some other apps suffer with.
@@ -45,12 +57,11 @@ Go to <https://www.latlong.net/> and figure out where you want the forecast for.
 
 ## Update
 
-Go to the module’s directory inside MagicMirror modules directory and pull the latest version from GitHub and install:
+Go to the module’s directory and pull the latest version:
 
 ```bash
 cd ~/MagicMirror/modules/MMM-OneCallWeather
 git pull
-npm ci
 ```
 
 ## Configuration
@@ -76,26 +87,42 @@ To use this module, add it to the modules array in the `config/config.js` file:
 
 The following properties can be configured:
 
-| Option             | Description                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `latitude`         | The latitude of the location used for weather information. <br><br> **Example:** `'51.500149'` <br> **Default value:** `false` <br><br> Value is **REQUIRED**                                                                                                                                                                                                                   |
-| `longitude`        | The longitude of the location used for weather information. <br> <br> **Example:** `-0.126240` <br><br> **Note:** - (minus sign) is West + (plus, or no minus sign) is East of the prime meridian in London. To find your location you can go to latlong.net, or use google maps. If no value is entered for either lat or long the module will not work. Value is **REQUIRED** |
-| `apikey`           | The [OpenWeatherMap](https://home.openweathermap.org) API key, which can be obtained by creating an OpenWeatherMap account. <br><br> Value is **REQUIRED**                                                                                                                                                                                                                      |
-| `apiVersion`       | The OpenWeatherMap API version to use.<br><br> **Default value:** `3.0`                                                                                                                                                                                                                                                                                                         |
-| `units`            | What units to use. Specified by config.js <br><br> **Possible values:** `config.units` = Specified by config.js, `default` = Kelvin, `metric` = Celsius, `imperial` =Fahrenheit <br> **Default value:** `config.units`                                                                                                                                                          |
-| `roundTemp`        | Round temperature values to nearest integer. <br><br> **Possible values:** `true` (round to integer) or `false` (display exact value with decimal point) <br> **Default value:** `false`                                                                                                                                                                                        |
-| `layout`           | Define whether layout should be horizontal or vertical. <br><br> **Possible values:** `"vertical"` or `"default"` <br> **Default value:** `"default"` <br> This value is optional. By default the weatherforecast module display in a hybrid format. The vertical option is OK too. Some work still needs to be done on pretty formats.                                         |
-| `showRainAmount`   | Should the predicted rain amount be displayed? <br><br> **Possible values:** `true` or `false` <br> **Default value:** `false` <br> This value is optional. By default the weatherforecast module will not display the predicted amount of rain.                                                                                                                                |
-| `updateInterval`   | How often does the content needs to be fetched? (Milliseconds) <br><br> **Possible values:** `1000` - `86400000` <br> **Default value:** `600000` (10 minutes). The free subscription level currently allows a call every 2 minutes.                                                                                                                                            |
-| `animationSpeed`   | Speed of the update animation. (Milliseconds) <br><br> **Possible values:** `0` - `5000` <br> **Default value:** `1000` (1 second)                                                                                                                                                                                                                                              |
-| `lang`             | The language of the days. <br><br> **Possible values:** `en`, `nl`, `ru`, etc ... <br> **Default value:** uses value of _config.language_                                                                                                                                                                                                                                       |
-| `iconset`          | The icon set to use.<br><br> **Possible values:** `4a`, `8a`, `8b` or `9a` any other directory of icons in the MMM-OneCallWeather/icons directory.<br> **Default value:** `4a`.                                                                                                                                                                                                 |
-| `iconsetFormat`    | The format of the symbols in the above iconset directories. The module can't parse the filetype of the icons so you have to tell it what type it is. MagicMirror is pretty flexible with image types. If you have some funky icons try them out<br><br> **Possible values:** `png`, `svg` or any other image file type.<br> **Default value:** `png`.                           |
-| `decimalSymbol`    | The decimal symbol to use.<br><br> **Possible values:** `.`, `,` or any other symbol.<br> **Default value:** `.`                                                                                                                                                                                                                                                                |
-| `fade`             | Fade the future events to black. (Gradient) <br><br> **Possible values:** `true` or `false` <br> **Default value:** `true`                                                                                                                                                                                                                                                      |
-| `initialLoadDelay` | The initial delay before loading. If you have multiple modules that use the same API key, you might want to delay one of the requests. (Milliseconds) <br><br> **Possible values:** `1000` - `5000` <br> **Default value:** `2500` (2.5 seconds delay. This delay is used to keep the OpenWeather API happy.)                                                                   |
-| `tableClass`       | Name of the classes issued from `main.css`. <br><br> **Possible values:** xsmall, small, medium, large, xlarge. <br> **Default value:** _small._                                                                                                                                                                                                                                |
-| `colored`          | If set 'colored' to true the min-temp get a blue tone and the max-temp get a red tone. <br><br> **Default value:** `true`                                                                                                                                                                                                                                                       |
+| Option                     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `latitude`                 | The latitude of the location used for weather information.<br><br>**Example:** `'51.500149'`<br>**Default value:** `false`<br><br>Value is **REQUIRED**                                                                                                                                                                                                                                                                                            |
+| `longitude`                | The longitude of the location used for weather information.<br><br>**Example:** `-0.126240`<br><br>**Note:** - (minus sign) is West + (plus, or no minus sign) is East of the prime meridian in London. To find your location you can go to latlong.net, or use google maps. If no value is entered for either lat or long the module will not work. Value is **REQUIRED**                                                                         |
+| `apikey`                   | The [OpenWeatherMap](https://home.openweathermap.org) API key, which can be obtained by creating an OpenWeatherMap account.<br><br>Value is **REQUIRED**                                                                                                                                                                                                                                                                                           |
+| `apiVersion`               | The OpenWeatherMap API version to use.<br><br>**Default value:** `3.0`                                                                                                                                                                                                                                                                                                                                                                             |
+| `units`                    | What units to use for temperature.<br><br>**Possible values:** `config.units` = Specified by `config.js`, `"kelvin"` = Kelvin, `"metric"` = Celsius, `"imperial"` = Fahrenheit<br>**Default value:** `config.units`                                                                                                                                                                                                                                |
+| `windUnits`                | The units to use for wind speed.<br><br>**Possible values:** `"mph"` (miles per hour), `"kmph"` (kilometers per hour), `"ms"` (meters per second), `"knots"` (knots)<br>**Default value:** `"mph"`                                                                                                                                                                                                                                                 |
+| `showWind`                 | Show wind speed (and direction) in the forecast section.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                                                |
+| `showWindSpeedUnit`        | Show the wind speed unit label next to the wind speed in the current weather section (e.g. `12 mph`, `10 kts`).<br><br>**Possible values:** `true` or `false`<br>**Default value:** `false`                                                                                                                                                                                                                                                        |
+| `showHumidity`             | Show the current humidity next to the wind speed in the current weather section.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                        |
+| `showCurrentRain`          | Show today's forecasted total precipitation (rain + snow) next to the wind speed in the current weather section. The value comes from the daily forecast for today (`daily[0]`), not from a live rain gauge. Hidden automatically when no precipitation is forecast.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                    |
+| `showWindDirection`        | Show wind direction in the current weather section alongside wind speed.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                                |
+| `showWindDirectionAsArrow` | When `showWindDirection` is `true`, display wind direction as a rotating arrow instead of a cardinal label (e.g. "NW"). The arrow points in the direction the wind is blowing towards.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `false`                                                                                                                                                                                 |
+| `useBeaufortInCurrent`     | Display current wind speed on the Beaufort scale (F0–F12) instead of numeric units.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `false`                                                                                                                                                                                                                                                                                    |
+| `roundTemp`                | Round temperature values to nearest integer.<br><br>**Possible values:** `true` (round to integer) or `false` (display exact value with decimal point)<br>**Default value:** `false`                                                                                                                                                                                                                                                               |
+| `showCurrent`              | Show the current weather section.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                                                                       |
+| `showAlerts`               | Show weather alerts from the OpenWeatherMap API in the current weather section. Displays the alert event names (e.g., "Severe Thunderstorm Warning"). Multiple alerts are shown on separate lines.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`<br>**Note:** Alerts are only available with certain OpenWeatherMap API plans and for locations where alerts are issued. Duplicate alerts are automatically filtered. |
+| `showAlertsHours`          | Time window (in hours) for displaying weather alerts. Only alerts that start within this time window and are still active are shown.<br><br>**Possible values:** Any positive number<br>**Default value:** `12` (shows alerts for the next 12 hours)<br>**Example:** Set to `24` to see alerts for the next day, or `6` for only the next 6 hours.                                                                                                 |
+| `showForecast`             | Show the forecast section.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                                                                              |
+| `forecastLayout`           | Defines how the forecast is structured internally.<br><br>**Possible values:** `"columns"` (days displayed as table columns), `"rows"` (days displayed as table rows)<br>**Default value:** `"columns"`                                                                                                                                                                                                                                            |
+| `arrangement`              | How current weather and forecast are positioned relative to each other (only relevant when both `showCurrent` and `showForecast` are `true`).<br><br>**Possible values:** `"vertical"` (forecast below current weather), `"horizontal"` (forecast next to current weather)<br>**Default value:** `"vertical"`                                                                                                                                      |
+| `showRainAmount`           | Display predicted rain amount separately. Rain values are shown in blue color.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                          |
+| `showSnowAmount`           | Display predicted snow amount separately. Snow values are shown in light gray/white color.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`<br>**Note:** When `convertSnowToDepth` is enabled, this shows estimated snow depth instead of water equivalent.                                                                                                                                                              |
+| `convertSnowToDepth`       | Convert snow water equivalent to estimated snow depth on ground using temperature-based density calculation. Uses scientific ratios ranging from 5:1 (wet snow) to 20:1 (powder) based on temperature.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`<br>**Note:** When enabled, snow is displayed in cm (metric) or in (imperial) instead of mm/in water equivalent.                                                  |
+| `snowDensityFactor`        | Adjustment factor for snow depth calculation. Use this to fine-tune the conversion based on local conditions.<br><br>**Possible values:** `0.5` to `2.0`<br>**Default value:** `1.0` (no adjustment)<br>**Example:** `1.2` makes snow estimates 20% deeper (lighter snow), `0.8` makes them 20% shallower (heavier snow)<br>**Note:** Only effective when `convertSnowToDepth` is `true`.                                                          |
+| `updateInterval`           | How often does the content needs to be fetched? (Milliseconds)<br><br>**Possible values:** `1000` - `86400000`<br>**Default value:** `600000` (10 minutes). The free subscription level currently allows a call every 2 minutes.                                                                                                                                                                                                                   |
+| `animationSpeed`           | Speed of the update animation. (Milliseconds)<br><br>**Possible values:** `0` - `5000`<br>**Default value:** `1000` (1 second)                                                                                                                                                                                                                                                                                                                     |
+| `iconset`                  | The icon set to use.<br><br>**Possible values:** `"4a"`, `"8a"`, `"8b"` or `"9a"` any other directory of icons in the MMM-OneCallWeather/icons directory.<br>**Default value:** `"4a"`.                                                                                                                                                                                                                                                            |
+| `iconsetFormat`            | The format of the symbols in the above iconset directories. The module can't parse the filetype of the icons so you have to tell it what type it is. MagicMirror is pretty flexible with image types. If you have some funky icons try them out<br><br>**Possible values:** `"png"`, `"svg"` or any other image file type.<br>**Default value:** `"png"`.                                                                                          |
+| `decimalSymbol`            | The decimal symbol to use.<br><br>**Possible values:** `"."`, `","` or any other symbol.<br>**Default value:** `"."`                                                                                                                                                                                                                                                                                                                               |
+| `fade`                     | Fade the future events to black. (Gradient)<br><br>**Possible values:** `true` or `false`<br>**Default value:** `true`                                                                                                                                                                                                                                                                                                                             |
+| `scale`                    | Append the temperature scale label to the degree symbol (e.g. `°C`, `°F`, `K`). The label is derived from the `units` config option.<br><br>**Possible values:** `true` or `false`<br>**Default value:** `false`                                                                                                                                                                                                                                   |
+| `initialLoadDelay`         | The initial delay before loading. If you have multiple modules that use the same API key, you might want to delay one of the requests. (Milliseconds)<br><br>**Possible values:** `1000` - `5000`<br>**Default value:** `2500` (2.5 seconds delay. This delay is used to keep the OpenWeather API happy.)                                                                                                                                          |
+| `tableClass`               | Name of the classes issued from `main.css`.<br><br>**Possible values:** `"xsmall"`, `"small"`, `"medium"`, `"large"`, `"xlarge"`<br>**Default value:** `"small"`                                                                                                                                                                                                                                                                                   |
+| `colored`                  | If set 'colored' to true the min-temp get a blue tone and the max-temp get a red tone.<br><br>**Default value:** `true`                                                                                                                                                                                                                                                                                                                            |
 
 ## Icon sets
 
@@ -193,7 +220,9 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ### Developer commands
 
-- `npm run lint` - Run linting and formatter checks.
-- `npm run lint:fix` - Fix linting and formatter issues.
-- `npm run test` - Run linting and formatter checks + run spelling check.
-- `npm run test:spelling` - Run spelling check.
+- `npm install` - Install development dependencies.
+- `node --run lint` - Run linting and formatter checks.
+- `node --run lint:fix` - Fix linting and formatter issues.
+- `node --run test` - Run linting and formatter checks + run spelling check.
+- `node --run test:spelling` - Run spelling check.
+- `DEMO_ALERT=1 node --run demo` - Run the module in demo mode with a test weather alert injected.

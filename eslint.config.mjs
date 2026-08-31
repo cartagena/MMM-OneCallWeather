@@ -1,74 +1,92 @@
-import eslintPluginImport from "eslint-plugin-import-x";
-import eslintPluginJs from "@eslint/js";
-import eslintPluginStylistic from "@stylistic/eslint-plugin";
-import globals from "globals";
+import css from '@eslint/css'
+import { defineConfig } from 'eslint/config'
+import globals from 'globals'
+import { flatConfigs as importX } from 'eslint-plugin-import-x'
+import js from '@eslint/js'
+import markdown from '@eslint/markdown'
+import stylistic from '@stylistic/eslint-plugin'
 
-const config = [
-  eslintPluginImport.flatConfigs.recommended,
-  eslintPluginJs.configs.all,
-  eslintPluginStylistic.configs.all,
+export default defineConfig([
+  { files: ['**/*.css'], languageOptions: { tolerant: true }, plugins: { css }, language: 'css/css', extends: ['css/recommended'], rules: { 'css/use-baseline': ['error', { available: 'newly' }] } },
   {
-    "files": ["**/*.js"],
-    "languageOptions": {
-      "globals": {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: {
         ...globals.browser,
         ...globals.node,
-        "Log": "readonly",
-        "Module": "readonly",
-        "WeatherObject": "readonly",
-        "config": "readonly",
-        "dayjs": "readonly"
+        Log: 'readonly',
+        Module: 'readonly',
+        WeatherObject: 'readonly',
+        config: 'readonly',
       },
-      "sourceType": "commonjs"
     },
-    "rules": {
-      "@stylistic/array-element-newline": ["error", "consistent"],
-      "@stylistic/dot-location": ["error", "property"],
-      "@stylistic/function-call-argument-newline": ["error", "consistent"],
-      "@stylistic/indent": ["error", 2],
-      "@stylistic/lines-around-comment": "off",
-      "@stylistic/padded-blocks": ["error", "never"],
-      "@stylistic/quote-props": ["error", "as-needed"],
-      "capitalized-comments": "off",
-      "complexity": "off",
-      "consistent-this": "off",
-      "id-length": "off",
-      "init-declarations": "off",
-      "line-comment-position": "off",
-      "max-lines": ["warn", 1000],
-      "max-lines-per-function": ["warn", 500],
-      "max-params": ["warn", 4],
-      "max-statements": ["warn", 200],
-      "multiline-comment-style": "off",
-      "no-inline-comments": "off",
-      "no-magic-numbers": "off",
-      "no-negated-condition": "off",
-      "no-ternary": "off",
-      "one-var": "off",
-      "sort-keys": "off",
-      "strict": "off"
-    }
+    extends: [importX.recommended, js.configs.all, stylistic.configs.recommended],
+    rules: {
+      '@stylistic/array-element-newline': ['error', 'consistent'],
+      '@stylistic/dot-location': ['error', 'property'],
+      '@stylistic/function-call-argument-newline': ['error', 'consistent'],
+      '@stylistic/indent': ['error', 2],
+      '@stylistic/lines-around-comment': 'off',
+      '@stylistic/no-multi-spaces': ['error', { ignoreEOLComments: true }],
+      '@stylistic/padded-blocks': ['error', 'never'],
+      '@stylistic/quote-props': ['error', 'as-needed'],
+      'capitalized-comments': 'off',
+      'complexity': 'off',
+      'id-length': 'off',
+      'init-declarations': 'off',
+      'line-comment-position': 'off',
+      'max-lines': ['warn', 1000],
+      'max-lines-per-function': ['warn', 500],
+      'max-params': ['warn', 4],
+      'max-statements': ['warn', 300],
+      'multiline-comment-style': 'off',
+      'no-inline-comments': 'off',
+      'no-magic-numbers': 'off',
+      'no-ternary': 'off',
+      'one-var': 'off',
+      'sort-keys': 'off',
+    },
   },
   {
-    "files": ["**/*.mjs"],
-    "languageOptions": {
-      "ecmaVersion": "latest",
-      "globals": {
-        ...globals.node
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: {
+        ...globals.node,
       },
-      "sourceType": "module"
+      sourceType: 'module',
     },
-    "rules": {
-      "@stylistic/array-element-newline": "off",
-      "@stylistic/indent": ["error", 2],
-      "@stylistic/padded-blocks": ["error", "never"],
-      "func-style": "off",
-      "max-lines-per-function": ["error", 100],
-      "no-magic-numbers": "off",
-      "one-var": "off",
-      "prefer-destructuring": "off"
-    }
-  }
-];
-
-export default config;
+    extends: [importX.recommended, js.configs.all, stylistic.configs.recommended],
+    rules: {
+      '@stylistic/array-element-newline': ['error', 'consistent'],
+      '@stylistic/indent': ['error', 2],
+      '@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
+      'import-x/no-unresolved': ['error', { ignore: ['eslint/config'] }],
+      'no-magic-numbers': 'off',
+      'sort-keys': 'off',
+    },
+  },
+  {
+    files: ['tests/**/*.test.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: {
+        ...globals.node,
+      },
+      sourceType: 'module',
+    },
+    extends: [importX.recommended, stylistic.configs.recommended],
+    rules: {
+      '@stylistic/indent': ['error', 2],
+      'init-declarations': 'off',
+      'max-lines-per-function': 'off',
+      'max-statements': 'off',
+      'no-inline-comments': 'off',
+      'no-magic-numbers': 'off',
+      'no-undefined': 'off',
+    },
+  },
+  { files: ['demo.config.js'], rules: { 'prefer-const': 'off' } },
+  { files: ['**/*.md'], plugins: { markdown }, extends: ['markdown/recommended'], language: 'markdown/gfm' },
+])

@@ -1,3 +1,376 @@
+/* stylelint-disable-next-line selector-class-pattern */
+.MMM-OneCallWeather {
+  /* ==========================================================================
+     CSS Custom Properties for easy theming and maintenance
+     ========================================================================== */
+  --color-temp-max: #ff5f5f;
+  --color-temp-min: #5f5fff;
+  --icon-size-forecast: 2.75rem;
+  --icon-size-large: 4rem;
+  --wind-badge-size-small: 2.4em;
+  --wind-badge-size-medium: 2.8em;
+  --wind-badge-size-large: 3.2em;
+  --wind-compass-size: 1.2em;
+  --wind-compass-opacity: 0.7;
+  --wind-arrow-opacity: 0.85;
+  --gap-icon-temp: 1rem;
+  --gap-weather-icon: 0.1rem;
+  --gap-forecast-sections: 2rem;
+
+  /* ==========================================================================
+     Layout Containers
+     ========================================================================== */
+
+  & .weather-layout-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  & .weather-layout-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  /* ==========================================================================
+     Forecast Table
+     ========================================================================== */
+
+  & .forecast-table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* ==========================================================================
+     Layout & Structure
+     ========================================================================== */
+
+  & table {
+    border-collapse: collapse;
+    display: inline-table;
+  }
+
+  & .horizontal-cell {
+    text-align: left;
+  }
+
+  & .vertical-row {
+    text-align: center;
+  }
+
+  & .default-column {
+    text-align: center;
+    vertical-align: top;
+  }
+
+  & .day,
+  & .max-temp,
+  & .min-temp,
+  & .wind-speed {
+    text-align: center;
+  }
+
+  & .alert {
+    text-align: center;
+    font-weight: bold;
+    color: #ff8c8c;
+    font-size: 20px;
+    white-space: nowrap;
+    padding: 0.5em;
+    line-height: 1.4;
+  }
+
+  /* ==========================================================================
+     Temperature Colors
+     ========================================================================== */
+
+  & .colored > .max-temp,
+  & .max-temp.colored {
+    color: var(--color-temp-max);
+  }
+
+  & .colored > .min-temp,
+  & .min-temp.colored {
+    color: var(--color-temp-min);
+  }
+
+  & .temp-sep {
+    opacity: 0.4;
+    padding-inline: 0.15em;
+    font-size: 0.9em;
+  }
+
+  /* ==========================================================================
+     Weather Icons
+     ========================================================================== */
+
+  & .weathericon {
+    height: var(--icon-size-large);
+    width: auto;
+    flex-shrink: 0;
+    object-fit: contain;
+    margin-inline: 20px;
+  }
+
+  & .weather-icon > span > img {
+    min-width: 2rem;
+    margin: 0 var(--gap-weather-icon);
+  }
+
+  & .forecast-icon {
+    height: auto;
+    max-width: var(--icon-size-forecast);
+    display: inline;
+    vertical-align: middle;
+    object-fit: contain;
+  }
+
+  /* ==========================================================================
+     Precipitation Display
+     ========================================================================== */
+
+  & .rain,
+  & .snow {
+    white-space: nowrap;
+  }
+
+  & .precip-rain {
+    color: #6db3f2;
+  }
+
+  & .precip-snow {
+    color: #e8e8e8;
+  }
+
+  & .precip-unit {
+    font-size: 0.7em;
+    opacity: 0.7;
+  }
+
+  /* ==========================================================================
+     Current Weather Display
+     ========================================================================== */
+
+  & .large-weather-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-icon-temp);
+  }
+
+  & .large-weather-icon-container,
+  & .wind-container {
+    text-align: center;
+  }
+
+  /* ==========================================================================
+     Info Badges (wind, humidity, rain in current weather row)
+     ========================================================================== */
+
+  & .wind-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+  }
+
+  & .info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    font-size: 0.85em;
+  }
+
+  & .ui-icon {
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  & .ui-icon-wind {
+    width: 1.3em;
+    height: 1.3em;
+  }
+
+  & .ui-icon-humidity {
+    width: 0.9em;
+    height: 0.9em;
+  }
+
+  /* ==========================================================================
+     Wind Badge
+     ========================================================================== */
+
+  & .wind-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--wind-badge-size-medium);
+    height: var(--wind-badge-size-medium);
+    min-width: var(--wind-badge-size-medium);
+    flex-shrink: 0;
+
+    & .wind-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: 900;
+      font-size: 0.7em;
+      z-index: 1;
+    }
+  }
+
+  & .wind-compass {
+    position: relative;
+    width: calc(var(--wind-compass-size) + 1.4em);
+    height: calc(var(--wind-compass-size) + 1.4em);
+    flex-shrink: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--wind-compass-size);
+      height: var(--wind-compass-size);
+      border: 2px solid currentcolor;
+      border-radius: 50%;
+      opacity: var(--wind-compass-opacity);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0.2em;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 0.3em solid transparent;
+      border-right: 0.3em solid transparent;
+      border-top: 0.5em solid currentcolor;
+      opacity: var(--wind-arrow-opacity);
+    }
+  }
+
+  /* ==========================================================================
+     Responsive Wind Badge Sizes
+     ========================================================================== */
+
+  & .small .wind-badge {
+    width: var(--wind-badge-size-small);
+    height: var(--wind-badge-size-small);
+
+    & .wind-value {
+      font-size: 0.65em;
+    }
+  }
+
+  & .medium .wind-badge {
+    width: var(--wind-badge-size-medium);
+    height: var(--wind-badge-size-medium);
+
+    & .wind-value {
+      font-size: 0.7em;
+    }
+  }
+
+  & .large .wind-badge {
+    width: var(--wind-badge-size-large);
+    height: var(--wind-badge-size-large);
+
+    & .wind-value {
+      font-size: 0.75em;
+    }
+  }
+}
+
+/* ==========================================================================
+   Weather Alert Popup (GLOBAL - outside module scope)
+   ========================================================================== */
+
+.weather-alert-link {
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.weather-alert-link:hover {
+  opacity: 0.8;
+  color: #ffb3b3;
+  text-decoration: underline;
+}
+
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.alert-box {
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  max-width: 600px;
+  width: 80%;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.alert-box h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 22px;
+  color: #ffcc00;
+}
+
+.alert-meta {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.alert-close {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.alert-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ==========================================================================
+   Custom OCW layout (local display customization)
+   ========================================================================== */
+
 .OCW.weather-container {
   display: flex;
   flex-wrap: wrap;
@@ -12,7 +385,6 @@
   align-self: flex-end;
 }
 
-/* Header styling */
 .OCW .header {
   text-transform: uppercase;
   font-size: 12px;
@@ -21,15 +393,13 @@
   color: rgba(0, 0, 0, 0.8);
 }
 
-/* Forecast row container */
 .OCW .forecast-row {
   display: grid;
-  grid-template-columns: 15% 20% 10% 45% 10%; /* Columns for day, icon, low temp, bar, and high temp */
+  grid-template-columns: 15% 20% 10% 45% 10%;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Light border between rows */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Day name styling */
 .OCW .day {
   font-size: 16px;
   font-weight: bold;
@@ -37,7 +407,6 @@
   text-align: left;
 }
 
-/* Weather icon */
 .OCW .icon {
   width: 40px;
   height: 40px;
@@ -53,29 +422,26 @@
   background-repeat: no-repeat;
 }
 
-/* Temperature styling */
 .OCW .low-temp, .OCW .high-temp {
   font-size: 14px;
   font-weight: bold;
   text-align: center;
 }
 
-/* Temperature bar container */
 .OCW .temp-bar {
-  width: 100px; /* Bar takes up its allocated column width */
+  width: 100px;
   height: 6px;
-  background: rgba(0, 0, 0, 0.1); /* Light background for the bar */
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
   position: relative;
   overflow: hidden;
 }
 
-/* Filled part of the temperature bar */
 .OCW .fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.3s ease, background-color 0.3s ease;
-  background: linear-gradient(to right, #00a8ff, #ff0000); /* Default gradient */
+  background: linear-gradient(to right, #00a8ff, #ff0000);
 }
 
 .OCW .current-weather {
@@ -107,6 +473,7 @@
   background-repeat: no-repeat;
   background-position: center;
 }
+
 .OCW .current-temp-feelslike {
   width: 100%;
 }

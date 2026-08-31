@@ -1,12 +1,13 @@
 {
   "name": "mmm-onecallweather",
-  "version": "2.4.2",
-  "description": "Weather module for MagicMirror² using openweathermap.org One Call API",
+  "version": "3.6.0",
+  "description": "Weather module for MagicMirror² using openweathermap.org One Call API.",
   "keywords": [
     "MagicMirror",
     "weather",
     "openweathermap"
   ],
+  "type": "commonjs",
   "homepage": "https://github.com/KristjanESPERANTO/MMM-OneCallWeather#readme",
   "bugs": {
     "url": "https://github.com/KristjanESPERANTO/MMM-OneCallWeather/issues"
@@ -18,31 +19,46 @@
   "license": "MIT",
   "author": "Captsi",
   "contributors": [
-    "https://github.com/Captsi/MMM-OneCallWeather/graphs/contributors",
-    "https://github.com/KristjanESPERANTO/MMM-OneCallWeather/graphs/contributors"
+    {
+      "name": "Contributors to KristjanESPERANTO/MMM-OneCallWeather",
+      "url": "https://github.com/KristjanESPERANTO/MMM-OneCallWeather/graphs/contributors"
+    }
   ],
   "main": "MMM-OneCallWeather.js",
   "scripts": {
-    "lint": "eslint && stylelint **/*.css && markdownlint . --ignore node_modules && prettier . --check",
-    "lint:fix": "eslint --fix && stylelint **/*.css --fix && markdownlint . --ignore node_modules --fix && prettier . --write",
-    "test": "npm run lint && npm run test:spelling",
-    "test:spelling": "cspell ."
+    "demo": "cd ../../ && MM_CONFIG_FILE=modules/MMM-OneCallWeather/demo.config.js node --run start:dev",
+    "lint": "eslint && prettier . --check",
+    "lint:fix": "eslint --fix && prettier . --write",
+    "prepare": "simple-git-hooks || true",
+    "release": "commit-and-tag-version --commit-all --config ./changelog.config.js",
+    "test": "node --run test:unit && node --run lint && node --run test:spelling",
+    "test:spelling": "cspell .",
+    "test:unit": "node --test tests/**/*.test.mjs"
   },
   "dependencies": {
-    "dayjs": "^1.11.13",
     "node-dht-sensor": "latest"
   },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*": [
+      "eslint --fix",
+      "prettier --write --ignore-unknown"
+    ]
+  },
   "devDependencies": {
-    "@eslint/js": "^9.21.0",
-    "@stylistic/eslint-plugin": "^4.1.0",
-    "cspell": "^8.17.5",
-    "eslint": "^9.21.0",
-    "eslint-plugin-import-x": "^4.6.1",
-    "globals": "^16.0.0",
-    "markdownlint-cli": "^0.44.0",
-    "prettier": "^3.5.2",
-    "stylelint": "^16.15.0",
-    "stylelint-config-standard": "^37.0.0",
-    "stylelint-prettier": "^5.0.3"
+    "@eslint/css": "^0.14.1",
+    "@eslint/js": "^9.39.4",
+    "@eslint/markdown": "^7.5.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "commit-and-tag-version": "^12.6.1",
+    "cspell": "^9.7.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import-x": "^4.16.1",
+    "globals": "^17.4.0",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.8.1",
+    "simple-git-hooks": "^2.13.1"
   }
 }
