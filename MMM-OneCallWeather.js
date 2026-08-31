@@ -822,7 +822,7 @@ Module.register('MMM-OneCallWeather', {
     const maxHourly = Math.min(this.config.maxHourliesToShow, 8)
     for (let j = 1; j <= maxHourly; j += 1) {
       const hour = this.forecast.hours[j]
-      if (!hour) break
+      if (!hour) { break }
 
       const hourDiv = document.createElement('div')
       hourDiv.className = 'apple-hour'
@@ -856,14 +856,14 @@ Module.register('MMM-OneCallWeather', {
     let globalMax = -Infinity
     for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
       const d = this.forecast.days[j]
-      globalMin = Math.min(globalMin, parseInt(d.minTemperature))
-      globalMax = Math.max(globalMax, parseInt(d.maxTemperature))
+      globalMin = Math.min(globalMin, parseInt(d.minTemperature, 10))
+      globalMax = Math.max(globalMax, parseInt(d.maxTemperature, 10))
     }
 
     for (let j = 0; j < this.config.maxDailiesToShow; j += 1) {
       const day = this.forecast.days[j]
-      const minTemp = parseInt(day.minTemperature)
-      const maxTemp = parseInt(day.maxTemperature)
+      const minTemp = parseInt(day.minTemperature, 10)
+      const maxTemp = parseInt(day.maxTemperature, 10)
       const totalRange = globalMax - globalMin
 
       const row = document.createElement('div')
@@ -891,7 +891,7 @@ Module.register('MMM-OneCallWeather', {
 
       const tempRange = maxTemp - minTemp
       const stops = []
-      for (let t = minTemp; t <= maxTemp; t++) {
+      for (let t = minTemp; t <= maxTemp; t += 1) {
         const pct = tempRange === 0 ? 0 : ((t - minTemp) / tempRange) * 100
         stops.push(`${this.getTemperatureColor(t)} ${pct}%`)
       }
@@ -932,7 +932,22 @@ Module.register('MMM-OneCallWeather', {
       { temp: 45, color: '#8e2825' },
     ]
 
-    for (let i = 0; i < colorMap.length - 1; i++) {
+    const interpolate = (c1, c2, factor) => {
+      const n1 = parseInt(c1.slice(1), 16)
+      const n2 = parseInt(c2.slice(1), 16)
+      const r1 = Math.floor(n1 / 65536) % 256
+      const r2 = Math.floor(n2 / 65536) % 256
+      const g1 = Math.floor(n1 / 256) % 256
+      const g2 = Math.floor(n2 / 256) % 256
+      const b1 = n1 % 256
+      const b2 = n2 % 256
+      const r = Math.round(r1 + factor * (r2 - r1))
+      const g = Math.round(g1 + factor * (g2 - g1))
+      const b = Math.round(b1 + factor * (b2 - b1))
+      return `#${(16777216 + r * 65536 + g * 256 + b).toString(16).slice(1)}`
+    }
+
+    for (let i = 0; i < colorMap.length - 1; i += 1) {
       const lower = colorMap[i]
       const upper = colorMap[i + 1]
       if (tempC >= lower.temp && tempC <= upper.temp) {
@@ -940,15 +955,6 @@ Module.register('MMM-OneCallWeather', {
       }
     }
     return tempC < colorMap[0].temp ? colorMap[0].color : colorMap.at(-1).color
-
-    function interpolate(c1, c2, factor) {
-      const n1 = parseInt(c1.slice(1), 16)
-      const n2 = parseInt(c2.slice(1), 16)
-      const r = Math.round(((n1 >> 16) & 0xff) + factor * (((n2 >> 16) & 0xff) - ((n1 >> 16) & 0xff)))
-      const g = Math.round(((n1 >> 8) & 0xff) + factor * (((n2 >> 8) & 0xff) - ((n1 >> 8) & 0xff)))
-      const b = Math.round((n1 & 0xff) + factor * ((n2 & 0xff) - (n1 & 0xff)))
-      return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
-    }
   },
 
   getOrdinal(bearing) {
