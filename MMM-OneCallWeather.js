@@ -38,7 +38,7 @@ Module.register('MMM-OneCallWeather', {
     iconsetFormat: 'png',
 
     onlyTemp: false,
-    maxHourliesToShow: 30,
+    maxHourliesToShow: 6,
     maxDailiesToShow: 6,
     colored: true,
     roundTemp: true,
@@ -819,7 +819,8 @@ Module.register('MMM-OneCallWeather', {
     const hourlyStrip = document.createElement('div')
     hourlyStrip.className = 'apple-hourly'
 
-    for (let j = 1; j <= this.config.maxHourliesToShow; j += 1) {
+    const maxHourly = Math.min(this.config.maxHourliesToShow, 8)
+    for (let j = 1; j <= maxHourly; j += 1) {
       const hour = this.forecast.hours[j]
       if (!hour) break
 
