@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- (c) ammap.com | SVG weather icons -->
-<svg width="56" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="56" height="56" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="blur" x="-.24684" y="-.19575" width="1.4937" height="1.4959">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
@@ -14,7 +14,7 @@
       </feMerge>
     </filter>
   </defs>
-  <g transform="translate(-4,-12)" filter="url(#blur)">
+  <g transform="translate(-4,-8)" filter="url(#blur)">
     <g transform="translate(20,10)">
       <g class="am-weather-cloud-1">
         <path transform="matrix(.6 0 0 .6 -10 -6)"
